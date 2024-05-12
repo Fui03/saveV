@@ -13,8 +13,9 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "googleServicesFile": "./googleServices-Info.plist",
-      "supportsTablet": true
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.moneyMiracle.saveV"
     },
     "android": {
       "googleServicesFile": "google-services.json",
