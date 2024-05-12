@@ -13,13 +13,16 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "googleServicesFile": "./googleServices-Info.plist",
       "supportsTablet": true
     },
     "android": {
+      "googleServicesFile": "google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.moneyMiracle.saveV"
     },
     "web": {
       "bundler": "metro",
@@ -27,7 +30,16 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "@react-native-firebase/app",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
