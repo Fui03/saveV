@@ -15,8 +15,10 @@ import {
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 
-import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
-import db from "@react-native-firebase/database";
+import {createUserWithEmailAndPassword, getAdditionalUserInfo, getAuth, updateProfile} from "firebase/auth";
+import app from '../firebaseConfig';
+
+// import db from "@react-native-firebase/database";
 
 
 
@@ -45,13 +47,16 @@ export default function Register() {
                 return;
               }
 
-              const response = await auth().createUserWithEmailAndPassword(
+              const auth = getAuth(app);
+
+              const response = await createUserWithEmailAndPassword(
+                  auth,  
                   email,
                   password
               );
 
               if (response.user) {
-                  await createUser(response);
+                  await updateProfile(response.user, {displayName: userName});
                   // navigation.dispatch(
                   //   CommonActions.reset({
                   //       index: 0,
@@ -90,14 +95,14 @@ export default function Register() {
         }
     }
 
-    const createUser = async (response: FirebaseAuthTypes.UserCredential) => {
-        db().ref(`/users/${response.user.uid}`).set({ userName });
-    }
+    // const createUser = async (response: FirebaseAuthTypes.UserCredential) => {
+        // db().ref(`/users/${response.user.uid}`).set({ userName });
+    // }
  
     return (
         <TouchableWithoutFeedback onPress={() => {
             Keyboard.dismiss();
-            console.log("dismiss keyboard");
+            // console.log("dismiss keyboard");
         }}>
             <SafeAreaView style = {styles.overall}>
               <View style = {styles.container}>
@@ -147,7 +152,10 @@ export default function Register() {
 
                   <Button
                     title="Login"
-                    onPress={() => navigation.navigate('Login')}/>
+                    onPress={() => {
+                      navigation.navigate('Login')
+                      // console.log("DONE")
+                    }}/>
                 
                 </View>
                 

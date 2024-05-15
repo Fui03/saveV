@@ -15,9 +15,10 @@ import {
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 
-import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
-import db from "@react-native-firebase/database";
-import { Colors } from "@/constants/Colors";
+// import auth, { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import app from '../firebaseConfig';
+
 
 
 
@@ -29,13 +30,18 @@ export default function Login() {
     const handleLogin = async () => {
         if (email && password) {
             try {
-                const response = await auth().signInWithEmailAndPassword(
+
+                const auth = getAuth(app);
+                const response = await signInWithEmailAndPassword(
+                    auth,
                     email,
                     password
                 );
 
                 if (response.user) {
+                    console.log("hi");
                     navigation.replace('Home');
+                    console.log("complete");
                 }
             } catch (e) {
                 // console.log(e);
@@ -86,7 +92,7 @@ export default function Login() {
                     
                     
                     <Text style = {styles.navigateTitle}>No account?</Text>
-                    <Text style = {styles.navigateRegister} onPress={() => navigation.navigate('Register')}>
+                    <Text style = {styles.navigateRegister} onPress={() => navigation.push('Register')}>
                     Sign Up Now!
                     </Text>
                     
