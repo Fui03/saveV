@@ -97,7 +97,7 @@ export default function Register() {
     return (
         <TouchableWithoutFeedback onPress={() => {
             Keyboard.dismiss();
-            // console.log("dismiss keyboard");
+            console.log("dismiss keyboard");
         }}>
             <SafeAreaView style = {styles.overall}>
               <View style = {styles.container}>
@@ -144,6 +144,10 @@ export default function Register() {
                     title="Sign Up"
                     onPress={handleSignUp}
                     color="#841584"/>
+
+                  <Button
+                    title="Login"
+                    onPress={() => navigation.navigate('Login')}/>
                 
                 </View>
                 
