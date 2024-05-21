@@ -7,12 +7,14 @@ import { useNavigation} from "@react-navigation/native";
 
 
 
-const Home = () => {
+const Statistic = () => {
 
-
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
   return (
     <SafeAreaView style={styles.container}>
-      <Text>Home</Text>
+
+      <Text>Statistic</Text>
+      
     </SafeAreaView>
   );
 };
@@ -25,4 +27,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Home;
+export default Statistic;

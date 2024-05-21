@@ -17,6 +17,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 
 import {createUserWithEmailAndPassword, getAdditionalUserInfo, getAuth, updateProfile} from "firebase/auth";
+import database from "firebase/database"
 import app from '../firebaseConfig';
 
 // import db from "@react-native-firebase/database";
@@ -58,21 +59,14 @@ export default function Register() {
 
               if (response.user) {
                   await updateProfile(response.user, {displayName: userName});
-                  // navigation.dispatch(
-                  //   CommonActions.reset({
-                  //       index: 0,
-                  //       routes: [{ name: 'Home' }],
-                  //   })
-                  // );
                   navigation.reset({
                     index: 0,
-                    routes: [{name: 'Home'}],
+                    routes: [{name: 'TabNavigation'}],
                   })
               }
             } catch (e) {
                 let err = "Try Again";
                 if (e instanceof Error && e.message ) {
-                  console.log(e.message)
                   switch (e.message) {
                     case 'Firebase: Error (auth/email-already-in-use).':
                       err = 'Email address is already in use!'
@@ -97,7 +91,7 @@ export default function Register() {
     }
 
     // const createUser = async (response: FirebaseAuthTypes.UserCredential) => {
-        // db().ref(`/users/${response.user.uid}`).set({ userName });
+    //     db().ref(`/users/${response.user.uid}`).set({ userName });
     // }
  
     return (
@@ -155,7 +149,7 @@ export default function Register() {
                     color="#841584"/>
 
                   <Text style = {styles.navigateTitle}>Already Have an acoount?</Text>
-                  <Text style = {styles.navigateRegister} onPress={() => navigation.push('Login')}>
+                  <Text style = {styles.navigateRegister} onPress={() => navigation.navigate('Login')}>
                   Login Now!
                   </Text>
                 
