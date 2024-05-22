@@ -9,6 +9,7 @@ import {
     TextInput,
     Button,
     Alert,
+    KeyboardAvoidingView
 } from 'react-native'
 
 
@@ -73,16 +74,16 @@ export default function Register() {
                 if (e instanceof Error && e.message ) {
                   console.log(e.message)
                   switch (e.message) {
-                    case '[auth/email-already-in-use] The email address is already in use by another account.':
+                    case 'Firebase: Error (auth/email-already-in-use).':
                       err = 'Email address is already in use!'
                       break;
-                    case '[auth/invalid-email] The email address is badly formatted.':
+                    case 'Firebase: Error (auth/invalid-email).':
                       err = 'Invalid email address!'
                       break;
                     case '[auth/operation-not-allowed] This operation is not allowed. This may be because the given sign-in provider is disabled for this Firebase project. Enable it in the Firebase console, under the sign-in method tab of the Auth section.':
                       err = 'Email/Password account are not enabled!'
                       break;
-                    case '[auth/weak-password] The given password is invalid. [ Password should be at least 6 characters ]':
+                    case 'Firebase: Password should be at least 6 characters (auth/weak-password).':
                       err = 'Password should be at least 6 characters!';
                       break;
                     default:
@@ -104,8 +105,11 @@ export default function Register() {
             Keyboard.dismiss();
             // console.log("dismiss keyboard");
         }}>
+
             <SafeAreaView style = {styles.overall}>
+              <KeyboardAvoidingView behavior="padding"/>
               <View style = {styles.container}>
+                
                 <Text style = {styles.logo}>saveV</Text>
                 <Text style = {styles.title}>Register</Text>
                 <View style = {styles.content}>
@@ -150,12 +154,10 @@ export default function Register() {
                     onPress={handleSignUp}
                     color="#841584"/>
 
-                  <Button
-                    title="Login"
-                    onPress={() => {
-                      navigation.navigate('Login')
-                      // console.log("DONE")
-                    }}/>
+                  <Text style = {styles.navigateTitle}>Already Have an acoount?</Text>
+                  <Text style = {styles.navigateRegister} onPress={() => navigation.push('Login')}>
+                  Login Now!
+                  </Text>
                 
                 </View>
                 
@@ -190,7 +192,7 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
     },
     content: {
-      flex: 9,
+      flex: 13,
     },
     input: {
       borderBottomWidth: 1,
@@ -204,5 +206,14 @@ const styles = StyleSheet.create({
     },
     contentText: {
       fontSize: 20
+    },
+    navigateTitle: {
+      fontSize:17,
+      textAlign: 'center',
+    },
+    navigateRegister: {
+      fontSize:18,
+      textAlign: 'center',
+      color: 'blue'
     }
 });

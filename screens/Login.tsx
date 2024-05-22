@@ -49,7 +49,7 @@ export default function Login() {
                 if (e instanceof Error && e.message) {
                     err = e.message
                 }
-                Alert.alert("Error", err);
+                Alert.alert("Error", "Invalid Emaill or Password");
             }
         }
     }
