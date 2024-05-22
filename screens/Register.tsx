@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useRef} from "react";
 import {
     View,
     SafeAreaView,
@@ -16,9 +16,13 @@ import {
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 
-import {createUserWithEmailAndPassword, getAdditionalUserInfo, getAuth, updateProfile} from "firebase/auth";
-import database from "firebase/database"
+import {createUserWithEmailAndPassword, UserCredential, getAuth, updateProfile} from "firebase/auth";
+import firebase from "firebase/app"
+import {getDatabase, ref, set} from "firebase/database";
 import app from '../firebaseConfig';
+
+import PhoneInput from 'react-native-phone-input'; 
+import CountryPicker from 'react-native-country-picker-modal'; 
 
 // import db from "@react-native-firebase/database";
 
@@ -27,8 +31,14 @@ import app from '../firebaseConfig';
 export default function Register() {
     const [userName, setUserName] = useState<string | undefined>();
     const [email, setEmail] = useState<string | undefined>();
+    const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
     const [password, setPassword] = useState<string | undefined>();
     const [confirmPassword, setConfirmedPassword] = useState<string | undefined>();
+
+    // const [phoneNumber, setPhoneNumber] = useState(''); 
+
+    
+    // const selectCountry
 
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
@@ -40,12 +50,24 @@ export default function Register() {
       }
     }
 
+    
+
     const handleSignUp = async () => {
         if (email && password && confirmPassword) {
             try {
               
               if (!samePassword(password, confirmPassword)) {
                 Alert.alert("Error", "Password and Confirm Password do not match!");
+                return;
+              }
+              
+              if(userName == undefined) {
+                Alert.alert("Error", "User Name cannot be empty!");
+                return;
+              }
+
+              if(phoneNumber == undefined) {
+                Alert.alert("Error", "Phone Number cannot be empty!");
                 return;
               }
 
@@ -58,11 +80,12 @@ export default function Register() {
               );
 
               if (response.user) {
-                  await updateProfile(response.user, {displayName: userName});
-                  navigation.reset({
-                    index: 0,
-                    routes: [{name: 'TabNavigation'}],
-                  })
+                await createUser(response);
+                await updateProfile(response.user, {displayName: userName});
+                navigation.reset({
+                  index: 0,
+                  routes: [{name: 'TabNavigation'}],
+                })
               }
             } catch (e) {
                 let err = "Try Again";
@@ -90,9 +113,13 @@ export default function Register() {
         }
     }
 
-    // const createUser = async (response: FirebaseAuthTypes.UserCredential) => {
-    //     db().ref(`/users/${response.user.uid}`).set({ userName });
-    // }
+    
+    const createUser = async (response: UserCredential) => {
+      console.log(1)
+      const database = getDatabase();
+      set(ref(database, `users/${response.user.uid}`), {phoneNumber, email, userName});
+      // (`/users/${response.user.uid}`).set({ userName });
+    }
  
     return (
         <TouchableWithoutFeedback onPress={() => {
@@ -125,6 +152,13 @@ export default function Register() {
                   inputMode="email"
                   autoCapitalize="none"/>
                   
+                  <Text style = {styles.contentText}>PhoneNumber</Text>
+                  <PhoneInput 
+                  initialValue={phoneNumber}
+                  initialCountry="sg"
+                  onChangePhoneNumber={(number) => setPhoneNumber(number)}
+                  style = {styles.input}/>
+
                   <Text style = {styles.contentText}>Password</Text>
                   <TextInput 
                   style ={styles.input}
@@ -168,7 +202,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff'
     },
     container:{
-      flex: 1,
+      flex: 10,
       marginHorizontal: 50,
       backgroundColor: "white",
       paddingTop: 20,
@@ -186,14 +220,14 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
     },
     content: {
-      flex: 13,
+      flex: 20,
     },
     input: {
       borderBottomWidth: 1,
       borderLeftWidth: 1,
       borderRightWidth: 1,
       borderTopWidth: 1,
-      height: 60,
+      height: 50,
       fontSize: 17,
       marginVertical: 20,
       fontWeight: "300",
@@ -209,5 +243,13 @@ const styles = StyleSheet.create({
       fontSize:18,
       textAlign: 'center',
       color: 'blue'
-    }
+    },
+    phoneInput: { 
+      height: 50, 
+      width: '100%', 
+      borderWidth: 1, 
+      borderColor: '#ccc', 
+      marginBottom: 20, 
+      paddingHorizontal: 10, 
+  },
 });
