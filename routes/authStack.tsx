@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Register from "@/screens/Register";
 import Home from "@/screens/Home";
 import Login from "@/screens/Login";
+import TabNavigation from "@/routes/TabNavigation";
 
 export default function authStack() {
     const Stack = createNativeStackNavigator();
@@ -19,8 +20,8 @@ export default function authStack() {
                     name = "Register"
                     component={Register}/>
                 <Stack.Screen
-                    name = "Home"
-                    component={Home}/>
+                    name = "TabNavigation"
+                    component={TabNavigation}/>
             </Stack.Navigator>
         </NavigationContainer>
     );

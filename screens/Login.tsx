@@ -39,9 +39,7 @@ export default function Login() {
                 );
 
                 if (response.user) {
-                    console.log("hi");
-                    navigation.replace('Home');
-                    console.log("complete");
+                    navigation.replace('TabNavigation');
                 }
             } catch (e) {
                 // console.log(e);
@@ -92,7 +90,7 @@ export default function Login() {
                     
                     
                     <Text style = {styles.navigateTitle}>No account?</Text>
-                    <Text style = {styles.navigateRegister} onPress={() => navigation.push('Register')}>
+                    <Text style = {styles.navigateRegister} onPress={() => navigation.navigate('Register')}>
                     Sign Up Now!
                     </Text>
                     
