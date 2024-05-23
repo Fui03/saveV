@@ -1,4 +1,4 @@
-import React, {useState, useRef} from "react";
+import React, {useState, useRef, useEffect} from "react";
 import {
     View,
     SafeAreaView,
@@ -9,14 +9,15 @@ import {
     TextInput,
     Button,
     Alert,
-    KeyboardAvoidingView
+    KeyboardAvoidingView,
+    Modal
 } from 'react-native'
 
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 
-import {createUserWithEmailAndPassword, UserCredential, getAuth, updateProfile} from "firebase/auth";
+import {createUserWithEmailAndPassword, UserCredential, getAuth, updateProfile, sendEmailVerification} from "firebase/auth";
 import firebase from "firebase/app"
 import {getDatabase, ref, set} from "firebase/database";
 import app from '../firebaseConfig';
@@ -34,6 +35,7 @@ export default function Register() {
     const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
     const [password, setPassword] = useState<string | undefined>();
     const [confirmPassword, setConfirmedPassword] = useState<string | undefined>();
+    const [modalVisibility, setModalVisibility] = useState<boolean>(false);
 
     // const [phoneNumber, setPhoneNumber] = useState(''); 
 
@@ -74,18 +76,20 @@ export default function Register() {
               const auth = getAuth(app);
 
               const response = await createUserWithEmailAndPassword(
-                  auth,  
-                  email,
-                  password
+                auth,  
+                email,
+                password
               );
 
+              
+
               if (response.user) {
+                await sendEmailVerification(response.user).then(() => {
+                  setModalVisibility(true);
+                  Alert.alert("Waiting for email verification", "Please verify your email!")
+                });
                 await createUser(response);
                 await updateProfile(response.user, {displayName: userName});
-                navigation.reset({
-                  index: 0,
-                  routes: [{name: 'TabNavigation'}],
-                })
               }
             } catch (e) {
                 let err = "Try Again";
@@ -115,11 +119,48 @@ export default function Register() {
 
     
     const createUser = async (response: UserCredential) => {
-      console.log(1)
       const database = getDatabase();
       set(ref(database, `users/${response.user.uid}`), {phoneNumber, email, userName});
       // (`/users/${response.user.uid}`).set({ userName });
     }
+
+    const resendVerificationEmail = () => {
+      const auth = getAuth(app);
+      const user = auth.currentUser;
+      if (user) {
+        sendEmailVerification(user)
+        .then(() => Alert.alert("Verification Email Resent", "Please check your email"))
+        .catch((e) => {Alert.alert("Error sending email", "Please try again later")});
+      }
+    }
+
+    const handleCheckEmailVerification = () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        user.reload().then(() => {
+          if (user.emailVerified) {
+            Alert.alert("Email verified!", "You may proceed!")
+            setModalVisibility(false);
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'TabNavigation'}],
+            })
+          }
+        })
+      }
+    }
+
+    useEffect(() => {
+      console.log("h");
+      if (modalVisibility) {
+        const interval = setInterval(() => {
+          handleCheckEmailVerification();
+        }, 5000);
+        console.log("interval")
+        return () => clearInterval(interval);
+      }
+    }, [modalVisibility]);
  
     return (
         <TouchableWithoutFeedback onPress={() => {
@@ -130,6 +171,19 @@ export default function Register() {
             <SafeAreaView style = {styles.overall}>
               <KeyboardAvoidingView behavior="padding"/>
               <View style = {styles.container}>
+                <Modal
+                animationType="slide"
+                transparent={false}
+                visible={modalVisibility}
+                onRequestClose={() =>{
+                  setModalVisibility(!modalVisibility);
+                }}>
+                  <View style={{ flex: 10, justifyContent: 'center', alignItems: 'center' }}>
+                  <View style={{ margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 35, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 }}>
+                  <Text style={{ marginBottom: 15, textAlign: 'center' }}>Please verify your email address to proceed.</Text>
+                  <Button title="Resend Verification Email" onPress={resendVerificationEmail}/>
+                </View>
+              </View></Modal>
                 
                 <Text style = {styles.logo}>saveV</Text>
                 <Text style = {styles.title}>Register</Text>
@@ -187,7 +241,9 @@ export default function Register() {
                   Login Now!
                   </Text>
                 
+                  
                 </View>
+                
                 
               </View>
             </SafeAreaView>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect} from "react";
 import {
     View,
     SafeAreaView,
@@ -11,12 +11,13 @@ import {
     Alert,
     ActivityIndicator,
     TouchableOpacity,
-    Image
+    Image,
+    Modal
 } from 'react-native';
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import app from '../firebaseConfig';
 
 export default function Login() {
@@ -24,7 +25,7 @@ export default function Login() {
     const [password, setPassword] = useState<string | undefined>();
     const [loading, setLoading] = useState<boolean>(false);
     const [showPassword, setShowPassword] = useState<boolean>(false);
-
+    const [modalVisibility, setModalVisibility] = useState<boolean>(false);
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
     const handleLogin = async () => {
@@ -34,9 +35,12 @@ export default function Login() {
                 const auth = getAuth(app);
                 const response = await signInWithEmailAndPassword(auth, email, password);
 
-                if (response.user) {
+                if (response.user && response.user.emailVerified) {
                     setLoading(false);
                     navigation.replace('TabNavigation');
+                } else {
+                    setModalVisibility(true);
+        
                 }
             } catch (e) {
                 setLoading(false);
@@ -49,11 +53,64 @@ export default function Login() {
         }
     };
 
+    const resendVerificationEmail = () => {
+        const auth = getAuth(app);
+        const user = auth.currentUser;
+        if (user) {
+          console.log(1)
+          sendEmailVerification(user)
+          .then(() => Alert.alert("Verification Email Resent", "Please check your email"))
+          .catch((e) => {Alert.alert("Error sending email", "Please try again later")});
+        }
+    }
+
+    const handleCheckEmailVerification = () => {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (user) {
+          user.reload().then(() => {
+            if (user.emailVerified) {
+              Alert.alert("Email verified!", "You may proceed!")
+              setModalVisibility(false);
+              navigation.reset({
+                index: 0,
+                routes: [{name: 'TabNavigation'}],
+              })
+            }
+          })
+        }
+      }
+
+    useEffect(() => {
+        console.log("h");
+        if (modalVisibility) {
+          const interval = setInterval(() => {
+            handleCheckEmailVerification();
+          }, 5000);
+          console.log("interval")
+          return () => clearInterval(interval);
+        }
+    }, [modalVisibility]);
+
     return (
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <SafeAreaView style={styles.overall}>
                 <Image source={require('../assets/images/logo1.png')} style={styles.logo} />
                 <View style={styles.container}>
+                <Modal
+                animationType="slide"
+                transparent={false}
+                visible={modalVisibility}
+                onRequestClose={() =>{
+                  setModalVisibility(!modalVisibility);
+                }}>
+                  <View style={{ flex: 10, justifyContent: 'center', alignItems: 'center' }}>
+                  <View style={{ margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 35, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 }}>
+                  <Text style={{ marginBottom: 15, textAlign: 'center' }}>Please verify your email address to proceed.</Text>
+                  <Button title="Resend Verification Email" onPress={resendVerificationEmail}/>
+                        </View>
+                    </View>
+                </Modal>
                     <Text style={styles.title}>Login</Text>
                     <View style={styles.content}>
                         <Text style={styles.contentText}>Email</Text>
