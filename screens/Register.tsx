@@ -17,7 +17,17 @@ import {
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 
-import {createUserWithEmailAndPassword, UserCredential, getAuth, updateProfile, sendEmailVerification} from "firebase/auth";
+
+import {
+  createUserWithEmailAndPassword, 
+  UserCredential, 
+  getAuth, 
+  updateProfile, 
+  sendEmailVerification, 
+  linkWithPhoneNumber, 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber, 
+  ApplicationVerifier} from "firebase/auth";
 import firebase from "firebase/app"
 import {getDatabase, ref, set} from "firebase/database";
 import app from '../firebaseConfig';
@@ -36,9 +46,7 @@ export default function Register() {
     const [password, setPassword] = useState<string | undefined>();
     const [confirmPassword, setConfirmedPassword] = useState<string | undefined>();
     const [modalVisibility, setModalVisibility] = useState<boolean>(false);
-
-    // const [phoneNumber, setPhoneNumber] = useState(''); 
-
+    const [Recaptcha, setRecaptcha] = useState<ApplicationVerifier>();
     
     // const selectCountry
 
@@ -74,15 +82,20 @@ export default function Register() {
               }
 
               const auth = getAuth(app);
-
+              
+              
               const response = await createUserWithEmailAndPassword(
                 auth,  
                 email,
                 password
               );
-
               
-
+              // console.log()
+              // const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+              //   'size': 'invisible',
+              //   'callback': () => {}
+              // })
+              
               if (response.user) {
                 await sendEmailVerification(response.user).then(() => {
                   setModalVisibility(true);
@@ -90,7 +103,10 @@ export default function Register() {
                 });
                 await createUser(response);
                 await updateProfile(response.user, {displayName: userName});
+                // linkWithPhoneNumber(response.user, phoneNumber, recaptchaVerifier);
+                // linkWithPhoneNumber()
               }
+
             } catch (e) {
                 let err = "Try Again";
                 if (e instanceof Error && e.message ) {
@@ -161,14 +177,33 @@ export default function Register() {
         return () => clearInterval(interval);
       }
     }, [modalVisibility]);
+
+    // useEffect(() => {
+    //   const auth = getAuth(app);
+    //   const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    //     "size": "invisible",
+    //     "callback":() => {}
+    //   });
+
+    //   setRecaptcha(recaptchaVerifier);
+
+    //   return () => {
+    //     recaptchaVerifier.clear();
+    //   }
+    // },[Recaptcha])
+
+
  
     return (
-        <TouchableWithoutFeedback onPress={() => {
-            Keyboard.dismiss();
-            // console.log("dismiss keyboard");
-        }}>
+      
+      <TouchableWithoutFeedback onPress={() => {
+        Keyboard.dismiss();
+        // console.log("dismiss keyboard");
+      }}>
 
             <SafeAreaView style = {styles.overall}>
+        <View id="recaptcha-container"></View>  
+
               <KeyboardAvoidingView behavior="padding"/>
               <View style = {styles.container}>
                 <Modal
@@ -183,7 +218,8 @@ export default function Register() {
                   <Text style={{ marginBottom: 15, textAlign: 'center' }}>Please verify your email address to proceed.</Text>
                   <Button title="Resend Verification Email" onPress={resendVerificationEmail}/>
                 </View>
-              </View></Modal>
+              </View>
+              </Modal>
                 
                 <Text style = {styles.logo}>saveV</Text>
                 <Text style = {styles.title}>Register</Text>
@@ -230,16 +266,22 @@ export default function Register() {
                   value={confirmPassword}
                   onChangeText={setConfirmedPassword}
                   secureTextEntry/>
-                  
+
+                 
                   <Button
                     title="Sign Up"
+                    testID='signup'
                     onPress={handleSignUp}
                     color="#841584"/>
+                  
+                
 
                   <Text style = {styles.navigateTitle}>Already Have an acoount?</Text>
                   <Text style = {styles.navigateRegister} onPress={() => navigation.navigate('Login')}>
                   Login Now!
                   </Text>
+
+                  
                 
                   
                 </View>
@@ -249,6 +291,8 @@ export default function Register() {
             </SafeAreaView>
 
         </TouchableWithoutFeedback>
+
+      
     );
 }
 
