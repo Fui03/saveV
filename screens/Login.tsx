@@ -37,7 +37,7 @@ export default function Login() {
                 const response = await signInWithEmailAndPassword(auth, email, password);
 
                 if (response.user && response.user.emailVerified) {
-   
+                    
                     setLoading(false);
                     navigation.replace('DrawerNavigation');
                 } else {

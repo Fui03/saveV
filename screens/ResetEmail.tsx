@@ -135,11 +135,11 @@ export default function ResetEmail() {
                             autoCapitalize="none"
                         />
         
-                        <Text style={styles.contentText}>Old Password</Text>
+                        <Text style={styles.contentText}>Password</Text>
                         <View style = {styles.passwordContainer}>
                             <TextInput
                                 style={styles.passwordInput}
-                                placeholder="Old Password"
+                                placeholder="Password"
                                 placeholderTextColor="#aaa"
                                 value={password}
                                 onChangeText={setPassword}

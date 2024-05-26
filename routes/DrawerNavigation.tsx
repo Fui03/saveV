@@ -9,6 +9,7 @@ import TabNavigation from "./TabNavigation";
 import CustomDrawerContent from "./customDrawer";
 import ResetPassword from "@/screens/ResetPassword";
 import ResetEmail from "@/screens/ResetEmail";
+import UpdateProfile from "@/screens/UpdateProfile";
 
 
 
@@ -33,6 +34,10 @@ export default function DrawerNavigation() {
                 name = "ResetEmail"
                 component={ResetEmail}
                 options={{title:"Reset Email"}}/>
+            <Drawer.Screen
+                name = "UpdateProfile"
+                component={UpdateProfile}
+                options={{title:"Update Profile"}}/>
         </Drawer.Navigator>
     );
 }

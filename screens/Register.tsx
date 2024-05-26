@@ -136,7 +136,7 @@ export default function Register() {
     
     const createUser = async (response: UserCredential) => {
       const database = getDatabase();
-      set(ref(database, `users/${response.user.uid}`), {phoneNumber, email, userName});
+      set(ref(database, `users/${response.user.uid}`), {userName, phoneNumber});
       // (`/users/${response.user.uid}`).set({ userName });
     }
 
