@@ -8,6 +8,7 @@ import Login from "@/screens/Login";
 import TabNavigation from "@/routes/TabNavigation";
 import LoginPhoneNumber from "@/screens/LoginPhoneNumber";
 import ForgetPassword from "@/screens/ForgetPassword";
+import DrawerNavigation from "@/routes/DrawerNavigation";
 
 export default function authStack() {
     const Stack = createNativeStackNavigator();
@@ -22,8 +23,9 @@ export default function authStack() {
                     name = "Register"
                     component={Register}/>
                 <Stack.Screen
-                    name = "TabNavigation"
-                    component={TabNavigation}/>
+                    name = "DrawerNavigation"
+                    component={DrawerNavigation}/>
+
                 <Stack.Screen
                     name = "LoginPhoneNumber"
                     component={LoginPhoneNumber}/>

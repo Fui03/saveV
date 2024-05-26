@@ -17,120 +17,133 @@ import {
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
-import { getAuth, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail,  EmailAuthProvider, reauthenticateWithCredential, updateEmail, verifyBeforeUpdateEmail, signOut } from 'firebase/auth';
 import app from '../firebaseConfig';
-import { getDatabase , ref, get} from "firebase/database";
+import { update } from "firebase/database";
 
-export default function Login() {
-    const [email, setEmail] = useState<string | undefined>();
+export default function ResetEmail() {
+    const [currentEmail, setCurrentEmail] = useState<string | undefined>();
+    const [newEmail, setNewEmail] = useState<string | undefined>();
     const [password, setPassword] = useState<string | undefined>();
-    const [loading, setLoading] = useState<boolean>(false);
     const [showPassword, setShowPassword] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
     const [modalVisibility, setModalVisibility] = useState<boolean>(false);
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
-    const handleLogin = async () => {
-        if (email && password) {
-            setLoading(true);
-            try {
-                const auth = getAuth(app);
-                const response = await signInWithEmailAndPassword(auth, email, password);
 
-                if (response.user && response.user.emailVerified) {
-   
-                    setLoading(false);
-                    navigation.replace('DrawerNavigation');
-                } else {
-                    setModalVisibility(true);
-        
-                }
-            } catch (e) {
-                setLoading(false);
-                let err = "Try Again";
-                if (e instanceof Error && e.message) {
-                    err = e.message;
-                }
-                Alert.alert("Error", "Invalid Email or Password");
-            }
-        }
-    };
-
-    const resendVerificationEmail = () => {
-        const auth = getAuth(app);
-        const user = auth.currentUser;
-        if (user) {
-          console.log(1)
-          sendEmailVerification(user)
-          .then(() => Alert.alert("Verification Email Resent", "Please check your email"))
-          .catch((e) => {Alert.alert("Error sending email", "Please try again later")});
-        }
-    }
-
-    const handleCheckEmailVerification = () => {
+    const handleNextStep = () => {
         const auth = getAuth();
         const user = auth.currentUser;
-        if (user) {
-          user.reload().then(() => {
-            if (user.emailVerified) {
-              Alert.alert("Email verified!", "You may proceed!")
-              setModalVisibility(false);
-              navigation.reset({
-                index: 0,
-                routes: [{name: 'DrawerNavigation'}],
-              })
+
+        if (user && user.email && currentEmail && password) {
+            
+            if (user.email !== currentEmail) {
+                Alert.alert("Error", "Current Email doesn't match the account!")
+                return;
             }
-          })
-        }
-      }
 
-    useEffect(() => {
-        if (modalVisibility) {
-          const interval = setInterval(() => {
-            handleCheckEmailVerification();
-          }, 5000);
-          return () => clearInterval(interval);
-        }
-    }, [modalVisibility]);
+            const credential = EmailAuthProvider.credential(
+                user.email,
+                password
+            )
 
+            const output = reauthenticateWithCredential(user, credential).then(() => {
+                setModalVisibility(true);
+            }).catch((e) => Alert.alert("Error", "Wrong Password"));
+
+        }
+    }
+    
+    const handleResetEmail = async () => {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (currentEmail === newEmail) {
+            Alert.alert("Error", "You cannot change back original email!")
+            return;
+        }
+
+        if (user && newEmail) {
+            
+            await verifyBeforeUpdateEmail(user, newEmail).then(() => {
+                signOut(auth).then(() => navigation.replace('Login'));
+                Alert.alert("Reminder", "Verification Email sent! \nPlease verify your new email! \n Your email will be change right after you verified your email!");
+            }).catch((e) => {
+                let err = "Try Again";
+                if (e instanceof Error && e.message ) {
+                  switch (e.message) {
+                    case 'Firebase: Error (auth/email-already-in-use).':
+                      err = 'Email address is already in use!'
+                      break;
+                    case 'Firebase: Error (auth/invalid-email).':
+                      err = 'Invalid email address!'
+                      break;
+                    default:
+                      err = e.message;
+                      break;
+                  }
+                }
+                Alert.alert("Error", err);
+            })
+        }
+        
+    }
+  
     return (
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <SafeAreaView style={styles.overall}>
                 <Image source={require('../assets/images/logo1.png')} style={styles.logo} />
                 <View style={styles.container}>
-                <Modal
-                animationType="slide"
-                transparent={false}
-                visible={modalVisibility}
-                onRequestClose={() =>{
-                  setModalVisibility(!modalVisibility);
-                }}>
-                  <View style={{ flex: 10, justifyContent: 'center', alignItems: 'center' }}>
-                  <View style={{ margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 35, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 }}>
-                  <Text style={{ marginBottom: 15, textAlign: 'center' }}>Please verify your email address to proceed.</Text>
-                  <Button title="Resend Verification Email" onPress={resendVerificationEmail}/>
+                    <Modal
+                    animationType="slide"
+                    transparent={false}
+                    visible={modalVisibility}
+                    onRequestClose={() =>{
+                    setModalVisibility(!modalVisibility);
+                    }}>
+                    <View style={styles.overall}>
+                        <Image source={require('../assets/images/logo1.png')} style={styles.logo} />
+                        <View style = {styles.container}>
+                            <Text style={styles.title}>Reset Email</Text>
+                            <View style={styles.content}>
+                                <Text style={styles.contentText}>New Email</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="New Email"
+                                    placeholderTextColor="#aaa"
+                                    value={newEmail}
+                                    onChangeText={setNewEmail}
+                                    inputMode="email"
+                                    autoCapitalize="none"
+                                />
+                                <Button title = "Reset Email" onPress={handleResetEmail}/>
+                            </View>
                         </View>
                     </View>
-                </Modal>
-                    <Text style={styles.title}>Login</Text>
+                    </Modal>
+                
+                    <Text style={styles.title}>Reset Email</Text>
                     <View style={styles.content}>
-                        <Text style={styles.contentText}>Email</Text>
+                        <Text style={styles.contentText}>Current Email</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="Email"
+                            placeholder="Current Email"
                             placeholderTextColor="#aaa"
-                            value={email}
-                            onChangeText={setEmail}
+                            value={currentEmail}
+                            onChangeText={setCurrentEmail}
                             inputMode="email"
                             autoCapitalize="none"
                         />
-                        <Text style={styles.contentText}>Password</Text>
-                        <View style={styles.passwordContainer}>
+        
+                        <Text style={styles.contentText}>Old Password</Text>
+                        <View style = {styles.passwordContainer}>
                             <TextInput
                                 style={styles.passwordInput}
-                                placeholder="Password"
+                                placeholder="Old Password"
                                 placeholderTextColor="#aaa"
                                 value={password}
                                 onChangeText={setPassword}
+                                autoCapitalize="none"
                                 secureTextEntry={!showPassword}
                             />
                             <TouchableOpacity
@@ -140,29 +153,10 @@ export default function Login() {
                                 <Text style={styles.showPasswordText}>{showPassword ? "Hide" : "Show"}</Text>
                             </TouchableOpacity>
                         </View>
-                        {loading ? (
-                            <ActivityIndicator size="large" color="#3498db" />
-                        ) : (
-                            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                                <Text style={styles.loginButtonText}>Login</Text>
-                            </TouchableOpacity>
-                        )}
-                        
-                        <View style = {styles.forgetPasswordContainer}>
-                            <TouchableOpacity onPress={() => navigation.navigate('ForgetPassword')}>
-                            <Text style={styles.forgetPasswordNavigation}>Forget Password?</Text>
-                            </TouchableOpacity>
-                        </View>
-                        
-                        <View style={styles.registerContainer}>
-                            <Text style={styles.navigateTitle}>No account?</Text>
-                            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                                <Text style={styles.navigateRegister}>Sign Up Now!</Text>
-                            </TouchableOpacity>
-                        </View>
+
+                    <Button title = "Next" onPress={handleNextStep}/>
                     </View>
                 </View>
-                <Button title="Login Using Phone Number" onPress={() => navigation.navigate('LoginPhoneNumber')}/>
             </SafeAreaView>
         </TouchableWithoutFeedback>
     );

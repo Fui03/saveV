@@ -160,7 +160,7 @@ export default function Register() {
             setModalVisibility(false);
             navigation.reset({
               index: 0,
-              routes: [{name: 'TabNavigation'}],
+              routes: [{name: 'DrawerNavigation'}],
             })
           }
         })
