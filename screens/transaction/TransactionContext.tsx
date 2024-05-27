@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext } from 'react';
 
 type Transaction = {
+  date: string | number | Date;
   id: string;
   name: string;
   amount: number;
