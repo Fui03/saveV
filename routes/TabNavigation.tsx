@@ -6,7 +6,7 @@ import { Button, Pressable } from 'react-native';
 
 
 import Home from "@/screens/Home";
-import Transaction from "@/screens/Transaction";
+import Transaction from "@/screens/transaction/Transaction";
 import Statistic from "@/screens/Statistic";
 import Profile from "@/screens/Profile";
 import { getAuth, signOut } from "firebase/auth";
