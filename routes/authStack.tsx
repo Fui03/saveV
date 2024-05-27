@@ -9,6 +9,8 @@ import TabNavigation from "@/routes/TabNavigation";
 import LoginPhoneNumber from "@/screens/LoginPhoneNumber";
 import ForgetPassword from "@/screens/ForgetPassword";
 import DrawerNavigation from "@/routes/DrawerNavigation";
+import IncomeStatistic from "@/screens/IncomeStatistic";
+import LoanStatistic from "@/screens/LoanStatistic";
 
 export default function authStack() {
     const Stack = createNativeStackNavigator();
@@ -32,6 +34,14 @@ export default function authStack() {
                 <Stack.Screen
                     name = "ForgetPassword"
                     component={ForgetPassword}/>
+                <Stack.Screen
+                    name = "IncomeStatistic"
+                    component={IncomeStatistic}
+                    options={{headerShown: true, title: "Income"}}/>
+                <Stack.Screen
+                    name = "LoanStatistic"
+                    component={LoanStatistic}
+                    options={{headerShown: true, title: "Loan"}}/>
             </Stack.Navigator>
         </NavigationContainer>
     );
