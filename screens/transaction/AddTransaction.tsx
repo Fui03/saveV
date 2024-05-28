@@ -5,6 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTransaction } from '@/screens/transaction/TransactionContext';
 import { getAuth } from 'firebase/auth';
 import { getDatabase, push, ref, set, update } from 'firebase/database';
+import { addDoc, collection, doc, getFirestore } from 'firebase/firestore';
 
 const AddTransaction = () => {
 
@@ -27,23 +28,28 @@ const AddTransaction = () => {
     const user = auth.currentUser;
 
     if (user) {
-      const db = getDatabase();
-      const userRef = ref(db, `users/${user.uid}/Transaction`);
+      // const db = getDatabase();
+      // const userRef = ref(db, `users/${user.uid}/Transaction`);
+      const db = getFirestore();
+      // const userRef = doc(db, "users", user.uid, "Transactions", "All Transaction")
       const transaction = {
         id: Math.random().toString(),
         name: name,
         amount: amount,
         date: new Date().toISOString(),
       }
-
+      
       try {
-        const newUserRef = push(userRef);
-        set(newUserRef, {
-          id: Math.random().toString(),
-          name: name,
-          amount: amount,
-          date: new Date().toISOString(),
-        })
+        const userRef = collection(db, `users/${user.uid}/Transaction`)
+        const newUserRef = await addDoc(userRef, transaction);
+        // console.log(transaction.id)
+        // const newUserRef = push(userRef);
+        // set(newUserRef, {
+        //   id: Math.random().toString(),
+        //   name: name,
+        //   amount: amount,
+        //   date: new Date().toISOString(),
+        // })
 
         navigation.goBack();
       } catch (e) {

@@ -34,6 +34,7 @@ import app from '../firebaseConfig';
 
 import PhoneInput from 'react-native-phone-input'; 
 import CountryPicker from 'react-native-country-picker-modal'; 
+import { collection, doc, getFirestore, setDoc } from "firebase/firestore";
 
 // import db from "@react-native-firebase/database";
 
@@ -135,9 +136,14 @@ export default function Register() {
 
     
     const createUser = async (response: UserCredential) => {
-      const database = getDatabase();
-      set(ref(database, `users/${response.user.uid}`), {userName, phoneNumber});
-      // (`/users/${response.user.uid}`).set({ userName });
+      // const database = getDatabase();
+      // set(ref(database, `users/${response.user.uid}`), {userName, phoneNumber});
+      const db = getFirestore();
+      const documents = doc(db, `users`, response.user.uid)
+      await setDoc(documents, {
+        userName,
+        phoneNumber,
+      })
     }
 
     const resendVerificationEmail = () => {
@@ -168,12 +174,10 @@ export default function Register() {
     }
 
     useEffect(() => {
-      console.log("h");
       if (modalVisibility) {
         const interval = setInterval(() => {
           handleCheckEmailVerification();
         }, 5000);
-        console.log("interval")
         return () => clearInterval(interval);
       }
     }, [modalVisibility]);

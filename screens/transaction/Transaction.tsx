@@ -6,6 +6,7 @@ import { useTransaction } from '@/screens/transaction/TransactionContext';
 import { format } from 'date-fns';
 import { getAuth } from 'firebase/auth';
 import { getDatabase, onValue, ref } from 'firebase/database';
+import { collection, doc, getFirestore, onSnapshot, query } from 'firebase/firestore';
 
 const TransactionScreen = () => {
   
@@ -43,19 +44,32 @@ const TransactionScreen = () => {
       const user = auth.currentUser;
 
       if (user) {
-        const db =getDatabase();
-        const userRef = ref(db, `users/${user.uid}/Transaction`);
+        // const db =getDatabase();
+        // const userRef = ref(db, `users/${user.uid}/Transaction`);
         
-        const unsubscribe = onValue(userRef, (snapshot) => {
-          const data = snapshot.val();
-          if (data) {
-            const transactionList = Object.keys(data).map(key => ({
-              id: key,
-              ...data[key]
-            }));
+        const db = getFirestore();
+        const userRef = collection(db, `users/${user.uid}/Transaction`);
+        const queryDoc = query(userRef);
 
-            setTransactions(transactionList);
-          }
+        // const unsubscribe = onValue(userRef, (snapshot) => {
+        //   const data = snapshot.val();
+        //   if (data) {
+        //     const transactionList = Object.keys(data).map(key => ({
+        //       id: key,
+        //       ...data[key]
+        //     }));
+
+        //     setTransactions(transactionList);
+        //   }
+        // })
+
+        const unsubscribe = onSnapshot(queryDoc, (snapshot) => {
+          const transactionList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as Transaction[];
+          
+          setTransactions(transactionList);
         })
         return () => unsubscribe();
       }

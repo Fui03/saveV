@@ -2,8 +2,9 @@ import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, ScrollView, TextInput, Button, Modal, Alert} from 'react-native';
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation} from "@react-navigation/native";
-import { getAuth, getMultiFactorResolver, signInWithRedirect } from 'firebase/auth';
+import { getAuth, getIdToken, getMultiFactorResolver, signInWithRedirect } from 'firebase/auth';
 import { getDatabase ,ref, update, get} from 'firebase/database';
+import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 
 export default function IncomeStatistic() {
     
@@ -18,8 +19,11 @@ export default function IncomeStatistic() {
         const user = auth.currentUser;
 
         if (user) {
-            const db = getDatabase();
-            const userRef = ref(db, `users/${user.uid}/Income`);
+            // const db = getDatabase();
+            // const userRef = ref(db, `users/${user.uid}/Income`);
+
+            const db = getFirestore();
+            const userRef = doc(db, "users", user.uid, "Income or Loan", "Income");
 
             try {
 
@@ -41,11 +45,16 @@ export default function IncomeStatistic() {
                     return;
                 }
 
-                await update(userRef, {
+                // await update(userRef, {
+                //     mainIncome: mainIncome,
+                //     sideIncomes: sideIncomes,
+                // })
+
+                await setDoc(userRef, {
                     mainIncome: mainIncome,
                     sideIncomes: sideIncomes,
                 })
-
+                
                 setIsEditable(false);
                 
                 Alert.alert("Success", "Update Successful")
@@ -81,11 +90,16 @@ export default function IncomeStatistic() {
             const user = auth.currentUser;
 
             if (user) {
-                const db = getDatabase();
-                const userRef = ref(db, `users/${user.uid}/Income`);
-                const snapshot = await get(userRef);
+                // const db = getDatabase();
+                // const userRef = ref(db, `users/${user.uid}/Income`);
+                // const snapshot = await get(userRef);
+
+                const db = getFirestore();
+                const userRef = doc(db, "users", user.uid, "Income or Loan", "Income");
+                const snapshot = await getDoc(userRef);
+
                 if (snapshot.exists()) {
-                    const userData = snapshot.val();
+                    const userData = snapshot.data();
                     setMainIncome(userData.mainIncome);
                     if (userData.sideIncomes !== undefined) {
                         setSideIncomes(userData.sideIncomes);
