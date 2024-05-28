@@ -18,34 +18,40 @@ export default function authStack() {
     const Stack = createNativeStackNavigator();
 
     return(
-        <NavigationContainer>
-            <Stack.Navigator initialRouteName="Login" screenOptions={{headerShown: false}}>
-                <Stack.Screen
-                    name = "Login"
-                    component={Login}/>
-                <Stack.Screen
-                    name = "Register"
-                    component={Register}/>
-                <Stack.Screen
-                    name = "DrawerNavigation"
-                    component={DrawerNavigation}/>
+        <TransactionProvider>
 
-                <Stack.Screen
-                    name = "LoginPhoneNumber"
-                    component={LoginPhoneNumber}/>
-                <Stack.Screen
-                    name = "ForgetPassword"
-                    component={ForgetPassword}/>
-                <Stack.Screen
-                    name = "IncomeStatistic"
-                    component={IncomeStatistic}
-                    options={{headerShown: true, title: "Income"}}/>
-                <Stack.Screen
-                    name = "LoanStatistic"
-                    component={LoanStatistic}
-                    options={{headerShown: true, title: "Loan"}}/>
-            </Stack.Navigator>
-        </NavigationContainer>
+            <NavigationContainer>
+                <Stack.Navigator initialRouteName="Login" screenOptions={{headerShown: false}}>
+                    <Stack.Screen
+                        name = "Login"
+                        component={Login}/>
+                    <Stack.Screen
+                        name = "Register"
+                        component={Register}/>
+                    <Stack.Screen
+                        name = "DrawerNavigation"
+                        component={DrawerNavigation}/>
+
+                    <Stack.Screen
+                        name = "LoginPhoneNumber"
+                        component={LoginPhoneNumber}/>
+                    <Stack.Screen
+                        name = "ForgetPassword"
+                        component={ForgetPassword}/>
+                    <Stack.Screen
+                        name = "IncomeStatistic"
+                        component={IncomeStatistic}
+                        options={{headerShown: true, title: "Income"}}/>
+                    <Stack.Screen
+                        name = "LoanStatistic"
+                        component={LoanStatistic}
+                        options={{headerShown: true, title: "Loan"}}/>
+                    
+                    <Stack.Screen name="AddTransaction" component={AddTransaction} />
+                    <Stack.Screen name="Transaction" component={Transaction} />
+                </Stack.Navigator>
+            </NavigationContainer>
+        </TransactionProvider>
     );
 }
 
@@ -88,8 +94,8 @@ export default function authStack() {
 //                     <Stack.Screen name="Login" component={Login} />
 //                     <Stack.Screen name="Register" component={Register} />
 //                     <Stack.Screen name="TabNavigation" component={TabNavigation} />
-//                     <Stack.Screen name="AddTransaction" component={AddTransaction} />
-//                     <Stack.Screen name="Transaction" component={Transaction} />
+                    // <Stack.Screen name="AddTransaction" component={AddTransaction} />
+                    // <Stack.Screen name="Transaction" component={Transaction} />
 //                 </Stack.Navigator>
 //             </NavigationContainer>
 //         </TransactionProvider>
