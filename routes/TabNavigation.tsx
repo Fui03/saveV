@@ -33,7 +33,7 @@ export default function TabNavigation() {
    
 
     return(
-        <Tab.Navigator screenOptions={{headerRight: () => <Button title="Sign Out" onPress={HandleSignOut}/>}}>
+        <Tab.Navigator screenOptions={{headerShown: false}}>
             <Tab.Screen name = "Home" component={Home} />
             <Tab.Screen name = "Transaction" component={Transaction}/>
             <Tab.Screen name = "Statistic" component={Statistic}/>

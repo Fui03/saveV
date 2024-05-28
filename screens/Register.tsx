@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useRef, useEffect} from "react";
 import {
     View,
     SafeAreaView,
@@ -9,16 +9,31 @@ import {
     TextInput,
     Button,
     Alert,
-    KeyboardAvoidingView
+    KeyboardAvoidingView,
+    Modal
 } from 'react-native'
 
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 
-import {createUserWithEmailAndPassword, getAdditionalUserInfo, getAuth, updateProfile} from "firebase/auth";
-import database from "firebase/database"
+
+import {
+  createUserWithEmailAndPassword, 
+  UserCredential, 
+  getAuth, 
+  updateProfile, 
+  sendEmailVerification, 
+  linkWithPhoneNumber, 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber, 
+  ApplicationVerifier} from "firebase/auth";
+import firebase from "firebase/app"
+import {getDatabase, ref, set} from "firebase/database";
 import app from '../firebaseConfig';
+
+import PhoneInput from 'react-native-phone-input'; 
+import CountryPicker from 'react-native-country-picker-modal'; 
 
 // import db from "@react-native-firebase/database";
 
@@ -27,8 +42,13 @@ import app from '../firebaseConfig';
 export default function Register() {
     const [userName, setUserName] = useState<string | undefined>();
     const [email, setEmail] = useState<string | undefined>();
+    const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
     const [password, setPassword] = useState<string | undefined>();
     const [confirmPassword, setConfirmedPassword] = useState<string | undefined>();
+    const [modalVisibility, setModalVisibility] = useState<boolean>(false);
+    const [Recaptcha, setRecaptcha] = useState<ApplicationVerifier>();
+    
+    // const selectCountry
 
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
@@ -40,6 +60,8 @@ export default function Register() {
       }
     }
 
+    
+
     const handleSignUp = async () => {
         if (email && password && confirmPassword) {
             try {
@@ -48,22 +70,43 @@ export default function Register() {
                 Alert.alert("Error", "Password and Confirm Password do not match!");
                 return;
               }
+              
+              if(userName == undefined) {
+                Alert.alert("Error", "User Name cannot be empty!");
+                return;
+              }
+
+              if(phoneNumber == undefined) {
+                Alert.alert("Error", "Phone Number cannot be empty!");
+                return;
+              }
 
               const auth = getAuth(app);
-
+              
+              
               const response = await createUserWithEmailAndPassword(
-                  auth,  
-                  email,
-                  password
+                auth,  
+                email,
+                password
               );
-
+              
+              // console.log()
+              // const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+              //   'size': 'invisible',
+              //   'callback': () => {}
+              // })
+              
               if (response.user) {
-                  await updateProfile(response.user, {displayName: userName});
-                  navigation.reset({
-                    index: 0,
-                    routes: [{name: 'TabNavigation'}],
-                  })
+                await sendEmailVerification(response.user).then(() => {
+                  setModalVisibility(true);
+                  Alert.alert("Waiting for email verification", "Please verify your email!")
+                });
+                await createUser(response);
+                await updateProfile(response.user, {displayName: userName});
+                // linkWithPhoneNumber(response.user, phoneNumber, recaptchaVerifier);
+                // linkWithPhoneNumber()
               }
+
             } catch (e) {
                 let err = "Try Again";
                 if (e instanceof Error && e.message ) {
@@ -90,19 +133,93 @@ export default function Register() {
         }
     }
 
-    // const createUser = async (response: FirebaseAuthTypes.UserCredential) => {
-    //     db().ref(`/users/${response.user.uid}`).set({ userName });
-    // }
+    
+    const createUser = async (response: UserCredential) => {
+      const database = getDatabase();
+      set(ref(database, `users/${response.user.uid}`), {userName, phoneNumber});
+      // (`/users/${response.user.uid}`).set({ userName });
+    }
+
+    const resendVerificationEmail = () => {
+      const auth = getAuth(app);
+      const user = auth.currentUser;
+      if (user) {
+        sendEmailVerification(user)
+        .then(() => Alert.alert("Verification Email Resent", "Please check your email"))
+        .catch((e) => {Alert.alert("Error sending email", "Please try again later")});
+      }
+    }
+
+    const handleCheckEmailVerification = () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user) {
+        user.reload().then(() => {
+          if (user.emailVerified) {
+            Alert.alert("Email verified!", "You may proceed!")
+            setModalVisibility(false);
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'DrawerNavigation'}],
+            })
+          }
+        })
+      }
+    }
+
+    useEffect(() => {
+      console.log("h");
+      if (modalVisibility) {
+        const interval = setInterval(() => {
+          handleCheckEmailVerification();
+        }, 5000);
+        console.log("interval")
+        return () => clearInterval(interval);
+      }
+    }, [modalVisibility]);
+
+    // useEffect(() => {
+    //   const auth = getAuth(app);
+    //   const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    //     "size": "invisible",
+    //     "callback":() => {}
+    //   });
+
+    //   setRecaptcha(recaptchaVerifier);
+
+    //   return () => {
+    //     recaptchaVerifier.clear();
+    //   }
+    // },[Recaptcha])
+
+
  
     return (
-        <TouchableWithoutFeedback onPress={() => {
-            Keyboard.dismiss();
-            // console.log("dismiss keyboard");
-        }}>
+      
+      <TouchableWithoutFeedback onPress={() => {
+        Keyboard.dismiss();
+        // console.log("dismiss keyboard");
+      }}>
 
             <SafeAreaView style = {styles.overall}>
+        <View id="recaptcha-container"></View>  
+
               <KeyboardAvoidingView behavior="padding"/>
               <View style = {styles.container}>
+                <Modal
+                animationType="slide"
+                transparent={false}
+                visible={modalVisibility}
+                onRequestClose={() =>{
+                  setModalVisibility(!modalVisibility);
+                }}>
+                  <View style={{ flex: 10, justifyContent: 'center', alignItems: 'center' }}>
+                  <View style={{ margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 35, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 }}>
+                  <Text style={{ marginBottom: 15, textAlign: 'center' }}>Please verify your email address to proceed.</Text>
+                  <Button title="Resend Verification Email" onPress={resendVerificationEmail}/>
+                </View>
+              </View>
+              </Modal>
                 
                 <Text style = {styles.logo}>saveV</Text>
                 <Text style = {styles.title}>Register</Text>
@@ -125,6 +242,13 @@ export default function Register() {
                   inputMode="email"
                   autoCapitalize="none"/>
                   
+                  <Text style = {styles.contentText}>PhoneNumber</Text>
+                  <PhoneInput 
+                  initialValue={phoneNumber}
+                  initialCountry="sg"
+                  onChangePhoneNumber={(number) => setPhoneNumber(number)}
+                  style = {styles.input}/>
+
                   <Text style = {styles.contentText}>Password</Text>
                   <TextInput 
                   style ={styles.input}
@@ -142,23 +266,33 @@ export default function Register() {
                   value={confirmPassword}
                   onChangeText={setConfirmedPassword}
                   secureTextEntry/>
-                  
+
+                 
                   <Button
                     title="Sign Up"
+                    testID='signup'
                     onPress={handleSignUp}
                     color="#841584"/>
+                  
+                
 
                   <Text style = {styles.navigateTitle}>Already Have an acoount?</Text>
                   <Text style = {styles.navigateRegister} onPress={() => navigation.navigate('Login')}>
                   Login Now!
                   </Text>
+
+                  
                 
+                  
                 </View>
+                
                 
               </View>
             </SafeAreaView>
 
         </TouchableWithoutFeedback>
+
+      
     );
 }
 
@@ -168,7 +302,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff'
     },
     container:{
-      flex: 1,
+      flex: 10,
       marginHorizontal: 50,
       backgroundColor: "white",
       paddingTop: 20,
@@ -186,14 +320,14 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
     },
     content: {
-      flex: 13,
+      flex: 20,
     },
     input: {
       borderBottomWidth: 1,
       borderLeftWidth: 1,
       borderRightWidth: 1,
       borderTopWidth: 1,
-      height: 60,
+      height: 50,
       fontSize: 17,
       marginVertical: 20,
       fontWeight: "300",
@@ -209,5 +343,13 @@ const styles = StyleSheet.create({
       fontSize:18,
       textAlign: 'center',
       color: 'blue'
-    }
+    },
+    phoneInput: { 
+      height: 50, 
+      width: '100%', 
+      borderWidth: 1, 
+      borderColor: '#ccc', 
+      marginBottom: 20, 
+      paddingHorizontal: 10, 
+  },
 });

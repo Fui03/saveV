@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React from 'react';
 import { SafeAreaView, Text, StyleSheet } from 'react-native';
 import Navigator from './routes/authStack';
