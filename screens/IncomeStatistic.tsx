@@ -181,7 +181,7 @@ export default function IncomeStatistic() {
 
             <View style={styles.container}>
                 <Text style={styles.title}>Main Income</Text>
-                <Text style={styles.title}>${mainIncome}</Text>
+                <Text style={styles.title}>${(mainIncome === undefined || Number.isNaN(mainIncome))  ? '0' :mainIncome.toString(10)}</Text>
             </View>
             <View style={styles.container}>
                 <Text style={styles.title}>Side Income</Text>
