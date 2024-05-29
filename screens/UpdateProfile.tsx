@@ -20,6 +20,7 @@ import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail,  EmailAuthProvider, reauthenticateWithCredential, updateEmail, verifyBeforeUpdateEmail, signOut } from 'firebase/auth';
 import app from '../firebaseConfig';
 import { getDatabase, update , ref, get} from "firebase/database";
+import { doc, getDoc, getFirestore, updateDoc } from "firebase/firestore";
 
 export default function UpdateProfile() {
     const [userName, setUserName] = useState<string | undefined>();
@@ -32,11 +33,17 @@ export default function UpdateProfile() {
         const user = auth.currentUser;
 
         if (user) {
-            const db = getDatabase();
-            const userRef = ref(db, `users/${user.uid}`)
+            // const db = getDatabase();
+            // const userRef = ref(db, `users/${user.uid}`)
 
+            const db = getFirestore();
+            const userRef = doc(db, `users`, user.uid)
+            
             try {
-                await update(userRef, {userName: userName});
+                // await update(userRef, {userName: userName});
+                await updateDoc(userRef, {
+                    userName: userName,
+                })
                 Alert.alert("Success", "Update Completed!")
                 navigation.replace('DrawerNavigation')
             } catch (e) {
@@ -51,11 +58,15 @@ export default function UpdateProfile() {
             const user = auth.currentUser;
 
             if (user) {
-                const db = getDatabase();
-                const userRef = ref(db, `users/${user.uid}`)
-                const snapshot = await get(userRef);
+                // const db = getDatabase();
+                // const userRef = ref(db, `users/${user.uid}`)
+                // const snapshot = await get(userRef);
+                const db = getFirestore();
+                const userRef = doc(db, `users`, user.uid);
+                const snapshot = await getDoc(userRef);
+
                 if (snapshot.exists()) {
-                    const userData = snapshot.val();
+                    const userData = snapshot.data();
                     setUserName(userData.userName);
                 } else {
                     Alert.alert("Error", "No data found!");

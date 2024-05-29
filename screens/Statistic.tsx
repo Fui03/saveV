@@ -1,18 +1,130 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import { SafeAreaView, Text, StyleSheet , Button, View, ScrollView, TextInput, TouchableOpacity, Image} from 'react-native';
 import { getAuth, signOut } from "firebase/auth";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation} from "@react-navigation/native";
-
+import { collection, collectionGroup, doc, getAggregateFromServer, getCountFromServer, getDoc, getFirestore, onSnapshot, query, sum, where } from 'firebase/firestore';
+import PieChart from 'react-native-pie-chart';
 
 
 
 const Statistic = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
+  const [mainIncome, setMainIncome] = useState<number>(0);
+  const [sideIncome, setSideIncome] = useState<number>(0)
+  const [totalIncome, setTotalIncome] = useState<number>(0);
+  const [totalLoan, setTotalLoan] = useState<number>(0);
+  const [totalTax, setTotalTax] = useState<number>(0);
 
-  return (
-      <ScrollView contentContainerStyle={styles.overall}>
+  
+
+  useEffect(() => {
+
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (user) {
+        
+        const db = getFirestore();
+        const incomeRef = doc(db, "users", user.uid, "Income or Loan", "Income");
+        const loanRef = doc(db, "users", user.uid, "Income or Loan", "Loan");
+        const fetchUserIncome = onSnapshot(incomeRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const userData = snapshot.data();
+                const mainIncome = userData.mainIncome || 0;
+                const sideIncome = userData.sideIncomes;
+
+                const totalSideIncome = sideIncome.reduce((acc: number, income: {name: string, amount: number}) => acc + income.amount, 0);
+
+                setMainIncome(mainIncome);
+                setSideIncome(totalSideIncome);
+
+            } else {
+                setMainIncome(0);
+                setSideIncome(0);
+            }
+        })
+
+        const fetchUserLoan = onSnapshot(loanRef, (snapshot) => {
+            if(snapshot.exists()) {
+                const userData = snapshot.data();
+                const loan = userData.loan;
+
+                const totalLoan = loan.reduce((acc: number, loan: {name: string, amount: number}) => acc + loan.amount, 0);
+                setTotalLoan(totalLoan);  
+            } else {
+                setTotalLoan(0);
+            }
+        })
+
+        return () => {
+            fetchUserIncome();
+            fetchUserLoan();
+        }
+    }
+  }, [])
+
+  useEffect(() => {
+    setTotalIncome(mainIncome + sideIncome);
+    setTotalTax(mainIncome *searchPercentageOfTax(mainIncome));
+  }, [mainIncome, sideIncome]);
+
+
+  
+    // const widthAndHeight = 250
+    // const series = [0.2,0.1,0.1,0.1,0.4]
+    // const sliceColor = ['#fbd203', '#ffb300', '#ff9100', '#ff6c00', '#ff3c00']
+
+    // const tax = () => {
+    //     const annualIncome = mainIncome * 12;
+    //     if (annualIncome <)
+    // }
+
+    const searchPercentageOfTax = (income:number) => {
+        const annualIncome = income * 12;
+        const taxRange = [
+            {amount: 20000, tax: 0},
+            {amount: 30000, tax: 0.02},
+            {amount: 40000, tax: 0.035},
+            {amount: 80000, tax: 0.07},
+            {amount: 120000, tax: 0.115},
+            {amount: 160000, tax: 0.15},
+            {amount: 200000, tax: 0.18},
+            {amount: 240000, tax: 0.19},
+            {amount: 280000, tax: 0.195},
+            {amount: 320000, tax: 0.2},
+            {amount: 500000, tax: 0.22},
+            {amount: 1000000, tax: 0.23},
+            {amount: Number.POSITIVE_INFINITY, tax: 0.24},
+        ]
+        
+        var begin = 0;
+        var end = taxRange.length;
+        
+        while (begin < end) {
+            const mid = Math.floor((begin + end) / 2);
+            if (annualIncome <= taxRange[mid].amount) {
+                end = mid;
+            } else {
+                begin = mid + 1;
+            }
+        }
+        
+        return taxRange[begin].tax;
+    }
+    
+    const percentageOfTax = totalTax / totalIncome * 100;
+    const percentageOfSideIncome = sideIncome / totalIncome * 100;
+    const percentageOfLoan = totalLoan / totalIncome * 100;
+    const percentageOfCPF = mainIncome * 0.2 / totalIncome * 100;
+    const percentageOfRemaining = 100 - percentageOfCPF -percentageOfTax - percentageOfSideIncome - percentageOfLoan;
+
+    const series = [percentageOfCPF, percentageOfLoan, percentageOfRemaining, percentageOfSideIncome, percentageOfTax];
+    const sliceColor = ['red', 'blue', 'green', 'yellow', 'black'];
+
+    return (
+        <ScrollView contentContainerStyle={styles.overall}>
         <TouchableOpacity style={styles.container} onPress={() => navigation.navigate('IncomeStatistic')}>
           <Text style = {styles.title}>Income</Text>
 
@@ -22,6 +134,12 @@ const Statistic = () => {
                 <Text style={styles.contentText}>Side</Text>
                 <Text style={styles.contentText}>Total</Text>
             </View>
+            <View style={styles.rowContent}>
+                <Text style={styles.contentText}>${mainIncome}</Text>
+                <Text style={styles.contentText}>${sideIncome}</Text>
+                <Text style={styles.contentText}>${totalIncome}</Text>
+            </View>
+            
           </View>
           
         </TouchableOpacity>
@@ -30,8 +148,26 @@ const Statistic = () => {
           <Text style={styles.title}>Loan</Text>
           <View style={styles.content}>
             <Text style={styles.contentText}>Total Loan</Text>
+            <Text style={styles.contentText}>${totalLoan}</Text>
           </View>
         </TouchableOpacity>
+
+
+        <PieChart
+            widthAndHeight={250}
+            series={series}
+            sliceColor={sliceColor}
+            coverRadius={0.45}
+            coverFill={'#FFF'}
+        />
+
+        <View style={styles.container}>
+          <Text style={styles.contentText}>Total Tax:{totalTax}</Text>
+          <Text style={styles.contentText}>Total CPF:{mainIncome * 0.2}</Text>
+          <Text style={styles.contentText}>Remaining Spending Power:{Math.floor(percentageOfRemaining * totalIncome)}</Text>
+
+        </View>
+
 
       </ScrollView>
 
@@ -40,7 +176,6 @@ const Statistic = () => {
 
 const styles = StyleSheet.create({
   overall: {
-      flex: 1,
       backgroundColor: '#f5f6fa',
       justifyContent: 'flex-start',
       alignItems: 'center', // Center everything horizontally

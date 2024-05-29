@@ -4,6 +4,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation} from "@react-navigation/native";
 import { getAuth, getMultiFactorResolver, signInWithRedirect } from 'firebase/auth';
 import { getDatabase ,ref, update, get} from 'firebase/database';
+import { collection, doc, getDoc, getFirestore, setDoc, updateDoc } from 'firebase/firestore';
 
 export default function LoanStatistic() {
     
@@ -17,8 +18,11 @@ export default function LoanStatistic() {
         const user = auth.currentUser;
 
         if (user) {
-            const db = getDatabase();
-            const userRef = ref(db, `users/${user.uid}/Loan`);
+            // const db = getDatabase();
+            // const userRef = ref(db, `users/${user.uid}/Loan`);
+
+            const db = getFirestore();
+            const userRef = doc(db, "users", user.uid, "Income or Loan", "Loan");
 
             try {
 
@@ -36,9 +40,13 @@ export default function LoanStatistic() {
                     return;
                 }
 
-                await update(userRef, {
+                // await update(userRef, {
+                //     loan: loan,
+                // })
+
+                await setDoc(userRef,{
                     loan: loan,
-                })
+                },{merge:true})
 
                 setIsEditable(false);
                 
@@ -75,11 +83,16 @@ export default function LoanStatistic() {
             const user = auth.currentUser;
 
             if (user) {
-                const db = getDatabase();
-                const userRef = ref(db, `users/${user.uid}/Loan`);
-                const snapshot = await get(userRef);
+                // const db = getDatabase();
+                // const userRef = ref(db, `users/${user.uid}/Loan`);
+                // const snapshot = await get(userRef);
+
+                const db = getFirestore();
+                const userRef = doc(db, "users", user.uid, "Income or Loan", "Loan");
+                const snapshot = await getDoc(userRef);
+
                 if (snapshot.exists()) {
-                    const userData = snapshot.val();
+                    const userData = snapshot.data();
                     if (userData.loan !== undefined) {
                         setLoan(userData.loan);
                     }
