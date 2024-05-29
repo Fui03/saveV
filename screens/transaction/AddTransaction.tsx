@@ -6,6 +6,8 @@ import { useTransaction } from '@/screens/transaction/TransactionContext';
 import { getAuth } from 'firebase/auth';
 import { getDatabase, push, ref, set, update } from 'firebase/database';
 import { addDoc, collection, doc, getFirestore } from 'firebase/firestore';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
 
 const AddTransaction = () => {
 
@@ -18,9 +20,11 @@ const AddTransaction = () => {
 
   const [name, setName] = useState('');
   const [amount, setAmount] = useState<number | undefined>();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [date, setDate] = useState<Date>(new Date());
+  const [openDatePicker, setOpenDatePicker] = useState<boolean>(false);
+  
+
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  // const { addTransaction } = useTransaction();
 
   const handleAddTransaction = async () => {
     
@@ -28,28 +32,22 @@ const AddTransaction = () => {
     const user = auth.currentUser;
 
     if (user) {
-      // const db = getDatabase();
-      // const userRef = ref(db, `users/${user.uid}/Transaction`);
+
       const db = getFirestore();
-      // const userRef = doc(db, "users", user.uid, "Transactions", "All Transaction")
-      const transaction = {
-        id: Math.random().toString(),
-        name: name,
-        amount: amount,
-        date: new Date().toISOString(),
-      }
+
       
       try {
-        const userRef = collection(db, `users/${user.uid}/Transaction`)
+
+        const year = date.getFullYear().toString();
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const transaction = {
+          name: name,
+          amount: amount,
+          date : date.toISOString(),
+        }
+
+        const userRef = collection(db, `users/${user.uid}/Years/${year}/Months/${month}/Transactions`)
         const newUserRef = await addDoc(userRef, transaction);
-        // console.log(transaction.id)
-        // const newUserRef = push(userRef);
-        // set(newUserRef, {
-        //   id: Math.random().toString(),
-        //   name: name,
-        //   amount: amount,
-        //   date: new Date().toISOString(),
-        // })
 
         navigation.goBack();
       } catch (e) {
@@ -57,17 +55,15 @@ const AddTransaction = () => {
       }
 
     }
-    // if (name && amount) {
-    //   const transaction = {
-    //     id: Math.random().toString(),
-    //     name,
-    //     amount: parseFloat(amount),
-    //     date: new Date().toISOString(),
-    //   };
-    //   addTransaction(transaction);
-    //   navigation.goBack();
-    // }
+
   };
+
+  const onChange = (event: any, selectedDate?: Date| undefined) => {
+    setOpenDatePicker(false);
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -89,6 +85,20 @@ const AddTransaction = () => {
           value={(amount === undefined || Number.isNaN(amount)) ? '' : amount.toString(10)}
           onChangeText={(text) => setAmount(parseFloat(text))}
         />
+      </View>
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Date</Text>
+        <Text>{date.toISOString()}</Text>
+        <Button title = "Select Date" onPress={() => setOpenDatePicker(true)}/>
+        {openDatePicker && (
+          <DateTimePicker
+          value={date}
+          mode="date"
+          display="default"
+          onChange={onChange}
+        />
+        )}
+        
       </View>
       <Button title="Add Transaction" onPress={handleAddTransaction} />
     </SafeAreaView>

@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { SafeAreaView, Text, StyleSheet, Button, FlatList, View, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTransaction } from '@/screens/transaction/TransactionContext';
 import { format } from 'date-fns';
 import { getAuth } from 'firebase/auth';
-import { getDatabase, onValue, ref } from 'firebase/database';
-import { collection, doc, getFirestore, onSnapshot, query } from 'firebase/firestore';
+import { getDatabase, onChildChanged, onValue, ref } from 'firebase/database';
+import { collection, doc, getFirestore, onSnapshot, query, where } from 'firebase/firestore';
+import MonthPicker from 'react-native-month-year-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const TransactionScreen = () => {
   
@@ -19,6 +21,9 @@ const TransactionScreen = () => {
 
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [totalExpenses, setTotalExpenses] = useState<number>(0);
+  const [date, setDate] = useState<Date>(new Date());
+  const [showDate, setShowDate] = useState<boolean>(false);
 
   const handleAddTransaction = () => {
     navigation.navigate('AddTransaction');
@@ -48,43 +53,68 @@ const TransactionScreen = () => {
         // const userRef = ref(db, `users/${user.uid}/Transaction`);
         
         const db = getFirestore();
-        const userRef = collection(db, `users/${user.uid}/Transaction`);
-        const queryDoc = query(userRef);
+        
+        const year = date.getFullYear().toString();
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        
+        const userRef = collection(db, `users/${user.uid}/Years/${year}/Months/${month}/Transactions`)
 
-        // const unsubscribe = onValue(userRef, (snapshot) => {
-        //   const data = snapshot.val();
-        //   if (data) {
-        //     const transactionList = Object.keys(data).map(key => ({
-        //       id: key,
-        //       ...data[key]
-        //     }));
+        const q = query(
+          userRef,
+        )
+        
 
-        //     setTransactions(transactionList);
-        //   }
-        // })
-
-        const unsubscribe = onSnapshot(queryDoc, (snapshot) => {
+        const unsubscribe = onSnapshot(q, (snapshot) => {
           const transactionList = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
           })) as Transaction[];
+
+          transactionList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
           
           setTransactions(transactionList);
+
+          setTotalExpenses(transactionList.reduce((acc: number, trans: {date: string | number | Date, id: string, name: string, amount: number}) => acc + trans.amount, 0));
+
         })
         return () => unsubscribe();
       }
     
 
-  }, [])
+  }, [date])
+
+  const showCalendar = () => setShowDate(true);
+
+  const onChange = (event: any, selectedDate?: Date| undefined) => {
+    setShowDate(false);
+    
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
+    
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.month}>November</Text>
+        <Text style={styles.month}>{format(date, "MM-yyyy")}</Text>
+        <Button title='Choose Date' onPress={showCalendar}/>
+        {showDate && (
+          <DateTimePicker
+            value = {date}
+            display='spinner'
+            onChange={onChange}
+          />
+          // <MonthPicker
+          //   value={date}
+          //   onChange={onChange}
+          // />
+        )}
         <View style={styles.balanceContainer}>
-          <Text style={styles.balanceText}>Income: $6231.23</Text>
-          <Text style={styles.balanceText}>Expenses: $2432.11</Text>
-          <Text style={styles.balanceText}>Balance: $3799.12</Text>
+          {/* <Text style={styles.balanceText}>Income: $6231.23</Text> */}
+          <Text style={styles.balanceText}>Monthly Expenses: ${totalExpenses}</Text>
+          {/* <Text style={styles.balanceText}>Balance: $3799.12</Text> */}
         </View>
       </View>
       <FlatList
