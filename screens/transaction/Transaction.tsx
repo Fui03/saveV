@@ -1,13 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { SafeAreaView, Text, StyleSheet, Button, FlatList, View, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTransaction } from '@/screens/transaction/TransactionContext';
 import { format } from 'date-fns';
+import { getAuth } from 'firebase/auth';
+import { getDatabase, onValue, ref } from 'firebase/database';
 
 const TransactionScreen = () => {
+  
+  type Transaction = {
+    date: string | number | Date;
+    id: string;
+    name: string;
+    amount: number;
+  };
+
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
-  const { transactions } = useTransaction();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const handleAddTransaction = () => {
     navigation.navigate('AddTransaction');
@@ -26,6 +36,32 @@ const TransactionScreen = () => {
     acc[date].push(transaction);
     return acc;
   }, {});
+
+  useEffect(() => {
+
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (user) {
+        const db =getDatabase();
+        const userRef = ref(db, `users/${user.uid}/Transaction`);
+        
+        const unsubscribe = onValue(userRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            const transactionList = Object.keys(data).map(key => ({
+              id: key,
+              ...data[key]
+            }));
+
+            setTransactions(transactionList);
+          }
+        })
+        return () => unsubscribe();
+      }
+    
+
+  }, [])
 
   return (
     <SafeAreaView style={styles.container}>
