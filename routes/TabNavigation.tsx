@@ -35,7 +35,7 @@ export default function TabNavigation() {
     return(
         <Tab.Navigator screenOptions={{headerShown: false}}>
             <Tab.Screen name = "Home" component={Home} />
-            <Tab.Screen name = "Transaction" component={Transaction}/>
+            <Tab.Screen name = "Expenses" component={Transaction}/>
             <Tab.Screen name = "Statistic" component={Statistic}/>
             <Tab.Screen name = "Profile" component={Profile}/>
         </Tab.Navigator>
