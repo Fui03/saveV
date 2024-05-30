@@ -199,7 +199,7 @@ const Statistic = () => {
                 }}
                 accessor="population"
                 backgroundColor="transparent"
-                //absolute // Show percentage
+                paddingLeft="0"
                 hasLegend={true}
             />
         </ScrollView>
