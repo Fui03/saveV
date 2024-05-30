@@ -210,10 +210,11 @@ export default function IncomeStatistic() {
 
 const styles = StyleSheet.create({
     overall: {
-        // flex: 1,
+        //  flex: 1,
         // backgroundColor: '#f5f6fa',
         justifyContent: 'flex-start',
         alignItems: 'center', // Center everything horizontally
+        paddingVertical: 50,
     },
     container: {
         backgroundColor: '#fff',
