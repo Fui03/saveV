@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { SafeAreaView, Text, StyleSheet, Button, FlatList, View, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTransaction } from '@/screens/transaction/TransactionContext';
 import { format } from 'date-fns';
 import { getAuth } from 'firebase/auth';
 import { getDatabase, onChildChanged, onValue, ref } from 'firebase/database';

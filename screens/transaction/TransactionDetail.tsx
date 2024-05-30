@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { SafeAreaView, TextInput, Button, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTransaction } from '@/screens/transaction/TransactionContext';
 import { getAuth } from 'firebase/auth';
 import { getDatabase, push, ref, set, update } from 'firebase/database';
 import { addDoc, collection, deleteDoc, doc, getFirestore } from 'firebase/firestore';

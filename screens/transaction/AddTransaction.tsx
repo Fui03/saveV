@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { SafeAreaView, TextInput, Button, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, TextInput, Button, StyleSheet, Text, View , Image, TouchableOpacity, Pressable} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTransaction } from '@/screens/transaction/TransactionContext';
 import { getAuth } from 'firebase/auth';
 import { getDatabase, push, ref, set, update } from 'firebase/database';
 import { addDoc, collection, doc, getFirestore } from 'firebase/firestore';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { format } from 'date-fns';
 
 
 const AddTransaction = () => {
@@ -86,21 +86,30 @@ const AddTransaction = () => {
           onChangeText={(text) => setAmount(parseFloat(text))}
         />
       </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Date</Text>
-        <Text>{date.toISOString()}</Text>
-        <Button title = "Select Date" onPress={() => setOpenDatePicker(true)}/>
-        {openDatePicker && (
-          <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={onChange}
-        />
-        )}
-        
-      </View>
-      <Button title="Add Transaction" onPress={handleAddTransaction} />
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Date</Text>
+          <TouchableOpacity onPress={() => setOpenDatePicker(true)}>
+            <View style={styles.dateContainer}>
+              <Image source={require('@/assets/images/calendar.png')} style={styles.logo}/>
+              <View style={styles.dateTextContainer}>
+                <Text style={styles.dateText}>{format(date, "dd-MM-yyyy")}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+            {/* <Button title = "Select Date" onPress={() => setOpenDatePicker(true)}/> */}
+          {openDatePicker && (
+            <DateTimePicker
+            value={date}
+            mode="date"
+            display="default"
+            onChange={onChange}
+            />
+          )}
+          
+        </View>
+        <Pressable style={styles.button} onPress={handleAddTransaction}>
+          <Text style={styles.buttonText}>Add Transaction</Text>
+        </Pressable>
     </SafeAreaView>
   );
 };
@@ -111,11 +120,12 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   inputContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   label: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
+    marginBottom: 5
   },
   input: {
     height: 40,
@@ -123,6 +133,49 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingLeft: 8,
   },
+  logo: {
+    width: 35, // Adjust width as needed
+    height: '83%', // Adjust height as needed
+    // paddingRight: 20,
+    // marginBottom: 20,
+    marginRight:10,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    width: '100%',
+    marginBottom: 10,
+    // borderWidth: 1,
+    paddingLeft: 5,
+    height: 42,
+    borderColor: 'gray',
+    alignItems: 'center',
+  },
+  dateTextContainer: {
+    // borderWidth:1,
+    justifyContent:'center',
+    width:'90%'
+  },
+  dateText: {
+    fontSize: 17,
+    fontWeight: "500",
+  },
+  button: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 30,
+    elevation: 3,
+    backgroundColor: 'black',
+  },
+  buttonText: {
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: 'bold',
+    letterSpacing: 0.25,
+    color: 'white',
+  }
 });
 
 export default AddTransaction;
