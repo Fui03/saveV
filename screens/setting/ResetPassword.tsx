@@ -18,8 +18,7 @@ import {
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
-import app from '../firebaseConfig';
-import { update } from "firebase/database";
+
 
 export default function ResetPassword() {
     const [oldPassword, setOldPassword] = useState<string | undefined>();
@@ -98,7 +97,7 @@ export default function ResetPassword() {
     return (
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <SafeAreaView style={styles.overall}>
-                <Image source={require('../assets/images/logo1.png')} style={styles.logo} />
+                <Image source={require('@/assets/images/logo1.png')} style={styles.logo} />
                 <View style={styles.container}>
                 
                     <Text style={styles.title}>Reset Password</Text>

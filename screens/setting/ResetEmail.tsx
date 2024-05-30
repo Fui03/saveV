@@ -18,8 +18,6 @@ import {
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail,  EmailAuthProvider, reauthenticateWithCredential, updateEmail, verifyBeforeUpdateEmail, signOut } from 'firebase/auth';
-import app from '../firebaseConfig';
-import { update } from "firebase/database";
 
 export default function ResetEmail() {
     const [currentEmail, setCurrentEmail] = useState<string | undefined>();
@@ -92,7 +90,7 @@ export default function ResetEmail() {
     return (
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <SafeAreaView style={styles.overall}>
-                <Image source={require('../assets/images/logo1.png')} style={styles.logo} />
+                <Image source={require('@/assets/images/logo1.png')} style={styles.logo} />
                 <View style={styles.container}>
                     <Modal
                     animationType="slide"
@@ -102,7 +100,7 @@ export default function ResetEmail() {
                     setModalVisibility(!modalVisibility);
                     }}>
                     <View style={styles.overall}>
-                        <Image source={require('../assets/images/logo1.png')} style={styles.logo} />
+                        <Image source={require('@/assets/images/logo1.png')} style={styles.logo} />
                         <View style = {styles.container}>
                             <Text style={styles.title}>Reset Email</Text>
                             <View style={styles.content}>

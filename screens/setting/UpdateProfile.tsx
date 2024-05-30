@@ -18,7 +18,6 @@ import {
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail,  EmailAuthProvider, reauthenticateWithCredential, updateEmail, verifyBeforeUpdateEmail, signOut } from 'firebase/auth';
-import app from '../firebaseConfig';
 import { getDatabase, update , ref, get} from "firebase/database";
 import { doc, getDoc, getFirestore, updateDoc } from "firebase/firestore";
 
@@ -82,7 +81,7 @@ export default function UpdateProfile() {
     return (
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <SafeAreaView style={styles.overall}>
-                <Image source={require('../assets/images/logo1.png')} style={styles.logo} />
+                <Image source={require('@/assets/images/logo1.png')} style={styles.logo} />
                 <View style={styles.container}>
                 
                     <Text style={styles.title}>Profile</Text>
