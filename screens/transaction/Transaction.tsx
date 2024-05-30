@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { SafeAreaView, Text, StyleSheet, Button, FlatList, View, TouchableOpacity } from 'react-native';
+import { SafeAreaView, Text, StyleSheet, Button, FlatList, View, TouchableOpacity, Image} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTransaction } from '@/screens/transaction/TransactionContext';
 import { format } from 'date-fns';
 import { getAuth } from 'firebase/auth';
 import { getDatabase, onChildChanged, onValue, ref } from 'firebase/database';
 import { collection, doc, getFirestore, onSnapshot, query, where } from 'firebase/firestore';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import MonthYearPicker from './Svgs/MonthYearPicker';
 
 
 const TransactionScreen = () => {
@@ -25,6 +25,9 @@ const TransactionScreen = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [showDate, setShowDate] = useState<boolean>(false);
 
+  const [isPickerVisible, setPickerVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<{ month: number; year: number } | null>(null);
+
   const handleAddTransaction = () => {
     navigation.navigate('AddTransaction');
   };
@@ -32,8 +35,8 @@ const TransactionScreen = () => {
   const renderTransaction = ({ item }: { item: any }) => (
     <TouchableOpacity onPress={() =>handleTransactionDetail(item)}>
       <View style={styles.transactionItem}>
-        <Text>{item.name}</Text>
-        <Text>${item.amount}</Text>
+        <Text style={styles.dataText}>{item.name}</Text>
+        <Text style={styles.dataText}>${item.amount}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -99,22 +102,49 @@ const TransactionScreen = () => {
     navigation.navigate('TransactionDetail', { transaction });
   };
 
+
+  const handleOpenPicker = () => {
+    setPickerVisible(true);
+  };
+
+  const handleClosePicker = () => {
+    setPickerVisible(false);
+  };
+
+  const handleSelectDate = (date: { month: number; year: number }) => {
+    setDate(new Date(date.year, date.month - 1));
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.month}>{format(date, "MM-yyyy")}</Text>
-        <Button title='Choose Date' onPress={showCalendar}/>
+        <TouchableOpacity onPress={handleOpenPicker} style={styles.date}>
+          <View style={styles.imageContainer}>
+            <Text style={styles.month}>{format(date, "MM")}</Text>
+            <Image source={require('@/assets/images/chevron_10009171.png')} style={styles.logo} />
+          </View>
+          <Text style={styles.year}>{format(date, "yyyy")}</Text>
+        </TouchableOpacity>
+        {/* <Button title='Choose Date' onPress={showCalendar}/> */}
+        {/* <Button title='Choose Date' onPress={handleOpenPicker}/> */}
         {showDate && (
-          <DateTimePicker
-            value = {date}
-            display='spinner'
-            onChange={onChange}
+          // <DateTimePicker
+          //   value = {date}
+          //   display='spinner'
+          //   onChange={onChange}
+          // />
+          <MonthYearPicker
+            visible={isPickerVisible}
+            onClose={handleClosePicker}
+            onSelect={handleSelectDate}
+            defaultMonth={date ? date.getMonth() + 1 : undefined}
+            defaultYear={date ? date.getFullYear() : undefined}
           />
-
         )}
         <View style={styles.balanceContainer}>
           {/* <Text style={styles.balanceText}>Income: $6231.23</Text> */}
-          <Text style={styles.balanceText}>Monthly Expenses: ${totalExpenses}</Text>
+          <Text style={styles.totalExpensesText}>Monthly Expenses:</Text>
+          <Text style={styles.totalExpensesNumber}>${totalExpenses}</Text>
           {/* <Text style={styles.balanceText}>Balance: $3799.12</Text> */}
         </View>
       </View>
@@ -146,17 +176,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   header: {
+    flexDirection:'row',
     backgroundColor: '#FFD700',
     padding: 20,
     borderRadius: 10,
     alignItems: 'center',
-  },
-  month: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    justifyContent:'space-around'
   },
   balanceContainer: {
+    // borderWidth:1,
     marginTop: 10,
+    alignItems:'center'
   },
   balanceText: {
     fontSize: 16,
@@ -167,9 +197,14 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     borderRadius: 8,
   },
+  dataText: {
+    fontSize:16,
+    marginLeft:10
+  },
   dateHeader: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
+    color:'gray'
   },
   transactionItem: {
     flexDirection: 'row',
@@ -192,6 +227,42 @@ const styles = StyleSheet.create({
   fabText: {
     fontSize: 30,
     color: '#fff',
+  },
+  date: {
+    // borderWidth:1,
+    // height: 125,
+    padding: 10 
+  },
+  imageContainer: {
+    // borderWidth:1,
+    flexDirection:'row'
+  },
+  logo: {
+    width: 10, // Adjust width as needed
+    height: '10%', // Adjust height as needed
+    // borderWidth:1,
+    // borderColor: 'red',
+    padding:10,
+    resizeMode: "cover",
+    alignSelf:"center",
+    marginLeft:10,
+  },
+  month: {
+    fontSize: 40,
+    fontWeight: 'bold',
+  },
+  year: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  totalExpensesText: {
+    fontSize: 18,
+    fontFamily:'serif'
+  },
+  totalExpensesNumber: {
+    fontSize: 20,
+    fontWeight:'bold',
+    fontFamily:'serif'
   },
 });
 

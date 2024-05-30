@@ -104,7 +104,7 @@ const Statistic = () => {
     const percentageOfRemaining = 100 - percentageOfCPF - percentageOfTax - percentageOfSideIncome - percentageOfLoan;
 
     const series = [percentageOfCPF, percentageOfLoan, percentageOfRemaining, percentageOfSideIncome, percentageOfTax];
-    const sliceColor = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6'];
+    const sliceColor = ['#d4f0f0', '#8fcaca', '#cce2cb', '#b6cfb6', '#97c1a9'];
 
     return (
         <ScrollView contentContainerStyle={styles.overall}>

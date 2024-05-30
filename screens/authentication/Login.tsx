@@ -17,13 +17,12 @@ import {
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
-import { getAuth, signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import app from '../firebaseConfig';
-import PhoneInput from 'react-native-phone-input'; 
+import { getAuth, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth';
+import app from '../../firebaseConfig';
+import { getDatabase , ref, get} from "firebase/database";
 
-export default function LoginPhoneNumber() {
+export default function Login() {
     const [email, setEmail] = useState<string | undefined>();
-    const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
     const [password, setPassword] = useState<string | undefined>();
     const [loading, setLoading] = useState<boolean>(false);
     const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -31,40 +30,36 @@ export default function LoginPhoneNumber() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
     const handleLogin = async () => {
-        // if (phoneNumber) {
-        //     setLoading(true);
-        //     try {
+        if (email && password) {
+            setLoading(true);
+            try {
+                const auth = getAuth(app);
+                const response = await signInWithEmailAndPassword(auth, email, password);
 
-        //     }
-        // }
-        // if (email && password) {
-        //     setLoading(true);
-        //     try {
-        //         const auth = getAuth(app);
-        //         const response = await signInWithEmailAndPassword(auth, email, password);
-
-        //         if (response.user && response.user.emailVerified) {
-        //             setLoading(false);
-        //             navigation.replace('TabNavigation');
-        //         } else {
-        //             setModalVisibility(true);
+                if (response.user && response.user.emailVerified) {
+                    
+                    setLoading(false);
+                    navigation.replace('DrawerNavigation');
+                } else {
+                    setModalVisibility(true);
         
-        //         }
-        //     } catch (e) {
-        //         setLoading(false);
-        //         let err = "Try Again";
-        //         if (e instanceof Error && e.message) {
-        //             err = e.message;
-        //         }
-        //         Alert.alert("Error", "Invalid Email or Password");
-        //     }
-        // }
+                }
+            } catch (e) {
+                setLoading(false);
+                let err = "Try Again";
+                if (e instanceof Error && e.message) {
+                    err = e.message;
+                }
+                Alert.alert("Error", "Invalid Email or Password");
+            }
+        }
     };
 
     const resendVerificationEmail = () => {
         const auth = getAuth(app);
         const user = auth.currentUser;
         if (user) {
+          console.log(1)
           sendEmailVerification(user)
           .then(() => Alert.alert("Verification Email Resent", "Please check your email"))
           .catch((e) => {Alert.alert("Error sending email", "Please try again later")});
@@ -81,12 +76,12 @@ export default function LoginPhoneNumber() {
               setModalVisibility(false);
               navigation.reset({
                 index: 0,
-                routes: [{name: 'TabNavigation'}],
+                routes: [{name: 'DrawerNavigation'}],
               })
             }
           })
         }
-    }
+      }
 
     useEffect(() => {
         if (modalVisibility) {
@@ -98,10 +93,9 @@ export default function LoginPhoneNumber() {
     }, [modalVisibility]);
 
     return (
-        
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <SafeAreaView style={styles.overall}>
-                <Image source={require('../assets/images/logo1.png')} style={styles.logo} />
+                <Image source={require('@/assets/images/logo1.png')} style={styles.logo} />
                 <View style={styles.container}>
                 <Modal
                 animationType="slide"
@@ -119,12 +113,33 @@ export default function LoginPhoneNumber() {
                 </Modal>
                     <Text style={styles.title}>Login</Text>
                     <View style={styles.content}>
-                        <Text style={styles.contentText}>PhoneNumber</Text>
-                        <PhoneInput 
-                  initialValue={phoneNumber}
-                  initialCountry="sg"
-                  onChangePhoneNumber={(number) => setPhoneNumber(number)}
-                  style = {styles.input}/>
+                        <Text style={styles.contentText}>Email</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Email"
+                            placeholderTextColor="#aaa"
+                            value={email}
+                            onChangeText={setEmail}
+                            inputMode="email"
+                            autoCapitalize="none"
+                        />
+                        <Text style={styles.contentText}>Password</Text>
+                        <View style={styles.passwordContainer}>
+                            <TextInput
+                                style={styles.passwordInput}
+                                placeholder="Password"
+                                placeholderTextColor="#aaa"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry={!showPassword}
+                            />
+                            <TouchableOpacity
+                                onPress={() => setShowPassword(!showPassword)}
+                                style={styles.showPasswordButton}
+                            >
+                                <Text style={styles.showPasswordText}>{showPassword ? "Hide" : "Show"}</Text>
+                            </TouchableOpacity>
+                        </View>
                         {loading ? (
                             <ActivityIndicator size="large" color="#3498db" />
                         ) : (
@@ -132,6 +147,13 @@ export default function LoginPhoneNumber() {
                                 <Text style={styles.loginButtonText}>Login</Text>
                             </TouchableOpacity>
                         )}
+                        
+                        <View style = {styles.forgetPasswordContainer}>
+                            <TouchableOpacity onPress={() => navigation.navigate('ForgetPassword')}>
+                            <Text style={styles.forgetPasswordNavigation}>Forget Password?</Text>
+                            </TouchableOpacity>
+                        </View>
+                        
                         <View style={styles.registerContainer}>
                             <Text style={styles.navigateTitle}>No account?</Text>
                             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
@@ -140,7 +162,7 @@ export default function LoginPhoneNumber() {
                         </View>
                     </View>
                 </View>
-                <Button title="Login Using Email" onPress={() => navigation.navigate('Login')}/>
+                <Button title="Login Using Phone Number" onPress={() => navigation.navigate('LoginPhoneNumber')}/>
             </SafeAreaView>
         </TouchableWithoutFeedback>
     );
@@ -239,7 +261,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 20,
+        marginTop: 10,
     },
     navigateTitle: {
         fontSize: 14,
@@ -250,5 +272,15 @@ const styles = StyleSheet.create({
         color: '#3498db',
         marginLeft: 5,
         fontWeight: 'bold',
+    },
+    forgetPasswordContainer: {
+        flexDirection:'row',
+        justifyContent:'flex-end',
+        alignItems:'flex-end',
+        marginTop: 15,
+    },
+    forgetPasswordNavigation: {
+        fontSize: 14,
+        color: '#3498db',
     }
 });

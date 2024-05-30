@@ -7,9 +7,9 @@ import { useNavigation} from "@react-navigation/native";
 
 import TabNavigation from "./TabNavigation";
 import CustomDrawerContent from "./customDrawer";
-import ResetPassword from "@/screens/ResetPassword";
-import ResetEmail from "@/screens/ResetEmail";
-import UpdateProfile from "@/screens/UpdateProfile";
+import ResetPassword from "@/screens/setting/ResetPassword";
+import ResetEmail from "@/screens/setting/ResetEmail";
+import UpdateProfile from "@/screens/setting/UpdateProfile";
 
 
 

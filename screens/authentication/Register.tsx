@@ -30,7 +30,7 @@ import {
 } from "firebase/auth";
 import firebase from "firebase/app";
 import { getDatabase, ref, set } from "firebase/database";
-import app from "../firebaseConfig";
+import app from "../../firebaseConfig";
 
 import PhoneInput from "react-native-phone-input";
 import CountryPicker from "react-native-country-picker-modal";
@@ -220,7 +220,7 @@ export default function Register() {
             }}
           >
           </Modal>
-          <Image source={require('../assets/images/logo1.png')} style={styles.logo_image} />
+          <Image source={require('@/assets/images/logo1.png')} style={styles.logo_image} />
           <Text style={styles.title}>Register</Text>
           <View style={styles.content}>
             <TextInput
