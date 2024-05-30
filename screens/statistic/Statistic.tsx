@@ -4,7 +4,11 @@ import { getAuth, signOut } from "firebase/auth";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { collection, collectionGroup, doc, getAggregateFromServer, getCountFromServer, getDoc, getFirestore, onSnapshot, query, sum, where } from 'firebase/firestore';
-import PieChart from 'react-native-pie-chart';
+//import PieChart from 'react-native-pie-chart';
+import { PieChart } from 'react-native-chart-kit';
+import { Dimensions } from 'react-native';
+
+const screenWidth = Dimensions.get('window').width;
 
 const Statistic = () => {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -101,10 +105,41 @@ const Statistic = () => {
     const percentageOfSideIncome = sideIncome / totalIncome * 100;
     const percentageOfLoan = totalLoan / totalIncome * 100;
     const percentageOfCPF = mainIncome * 0.2 / totalIncome * 100;
-    const percentageOfRemaining = 100 - percentageOfCPF - percentageOfTax - percentageOfSideIncome - percentageOfLoan;
+    const percentageOfRemaining = 100 - percentageOfCPF - percentageOfTax - percentageOfLoan;
 
-    const series = [percentageOfCPF, percentageOfLoan, percentageOfRemaining, percentageOfSideIncome, percentageOfTax];
-    const sliceColor = ['#d4f0f0', '#8fcaca', '#cce2cb', '#b6cfb6', '#97c1a9'];
+    //const series = [percentageOfCPF, percentageOfLoan, percentageOfRemaining, percentageOfSideIncome, percentageOfTax];
+    //const sliceColor = ['#d4f0f0', '#8fcaca', '#cce2cb', '#b6cfb6', '#97c1a9'];
+
+    const data = [
+        {
+            name: `CPF`,
+            population: parseFloat(percentageOfCPF.toFixed(2)),
+            color: "#d4f0f0",
+            legendFontColor: "#7F7F7F",
+            legendFontSize: 15
+        },
+        {
+            name: `Loan`,
+            population: parseFloat(percentageOfLoan.toFixed(2)),
+            color: "#8fcaca",
+            legendFontColor: "#7F7F7F",
+            legendFontSize: 15
+        },
+        {
+            name: `Spend Power`,
+            population: parseFloat(percentageOfRemaining.toFixed(2)),
+            color: "#cce2cb",
+            legendFontColor: "#7F7F7F",
+            legendFontSize: 15
+        },
+        {
+            name: `Tax`,
+            population: parseFloat(percentageOfTax.toFixed(2)),
+            color: "#97c1a9",
+            legendFontColor: "#7F7F7F",
+            legendFontSize: 15
+        }
+    ];
 
     return (
         <ScrollView contentContainerStyle={styles.overall}>
@@ -140,16 +175,33 @@ const Statistic = () => {
             </View>
 
             <Text style={styles.pieChartTitle}>Analysis Pie Chart</Text>
-            <PieChart
-                widthAndHeight={250}
-                series={series}
-                sliceColor={sliceColor}
-                coverRadius={0.45}
-                coverFill={'#FFF'}
-                style={styles.pieChart}
-            />
+    
 
-            
+            <PieChart
+                data={data}
+                width={screenWidth * 0.9}
+                height={220}
+                chartConfig={{
+                    backgroundColor: '#1cc910',
+                    backgroundGradientFrom: '#eff3ff',
+                    backgroundGradientTo: '#efefef',
+                    decimalPlaces: 2,
+                    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                    style: {
+                        borderRadius: 20
+                    },
+                    propsForDots: {
+                        r: '6',
+                        strokeWidth: '2',
+                        stroke: '#ffa726'
+                    }
+                }}
+                accessor="population"
+                backgroundColor="transparent"
+                //absolute // Show percentage
+                hasLegend={true}
+            />
         </ScrollView>
     );
 };
