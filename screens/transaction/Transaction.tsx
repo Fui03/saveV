@@ -7,8 +7,8 @@ import { format } from 'date-fns';
 import { getAuth } from 'firebase/auth';
 import { getDatabase, onChildChanged, onValue, ref } from 'firebase/database';
 import { collection, doc, getFirestore, onSnapshot, query, where } from 'firebase/firestore';
-import MonthPicker from 'react-native-month-year-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+
 
 const TransactionScreen = () => {
   
@@ -30,10 +30,12 @@ const TransactionScreen = () => {
   };
 
   const renderTransaction = ({ item }: { item: any }) => (
-    <View style={styles.transactionItem}>
-      <Text>{item.name}</Text>
-      <Text>${item.amount}</Text>
-    </View>
+    <TouchableOpacity onPress={() =>handleTransactionDetail(item)}>
+      <View style={styles.transactionItem}>
+        <Text>{item.name}</Text>
+        <Text>${item.amount}</Text>
+      </View>
+    </TouchableOpacity>
   );
 
   const groupedTransactions: { [key: string]: any[] } = transactions.reduce((acc: { [key: string]: any[] }, transaction) => {
@@ -84,16 +86,18 @@ const TransactionScreen = () => {
 
   }, [date])
 
-  const showCalendar = () => setShowDate(true);
+  const showCalendar = useCallback(() => setShowDate(true), []);
 
-  const onChange = (event: any, selectedDate?: Date| undefined) => {
+  const onChange = useCallback((event: any, newDate?: Date | undefined) => {
     setShowDate(false);
-    
-    if (selectedDate) {
-      setDate(selectedDate);
+    if (newDate) {
+      setDate(newDate);
     }
-    
-  }
+  }, []);
+
+  const handleTransactionDetail = (transaction: Transaction) => {
+    navigation.navigate('TransactionDetail', { transaction });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -106,10 +110,7 @@ const TransactionScreen = () => {
             display='spinner'
             onChange={onChange}
           />
-          // <MonthPicker
-          //   value={date}
-          //   onChange={onChange}
-          // />
+
         )}
         <View style={styles.balanceContainer}>
           {/* <Text style={styles.balanceText}>Income: $6231.23</Text> */}
