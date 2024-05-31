@@ -40,19 +40,19 @@ export default function authStack() {
                     <Stack.Screen
                         name = "IncomeStatistic"
                         component={IncomeStatistic}
-                        options={{headerShown: true, title: "Income"}}/>
+                        options={{headerShown: true, title: "Income", headerBackTitle:"Statistics"}}/>
                     <Stack.Screen
                         name = "LoanStatistic"
                         component={LoanStatistic}
-                        options={{headerShown: true, title: "Loan"}}/>
+                        options={{headerShown: true, title: "Loan", headerBackTitle:"Statistics"}}/>
                     <Stack.Screen 
                         name="AddTransaction" 
                         component={AddTransaction}
-                        options={{headerShown: true, title: "Add transaction"}}/>
+                        options={{headerShown: true, title: "Add transaction", headerBackTitle:"Expenses"}}/>
                     <Stack.Screen 
                         name="TransactionDetail" 
                         component={TransactionDetail}
-                        options={{headerShown: true, title: "Expense Detail"}}/>
+                        options={{headerShown: true, title: "Expense Detail", headerBackTitle:"Expenses"}}/>
                 </Stack.Navigator>
             </NavigationContainer>
     );
