@@ -136,15 +136,17 @@ const Statistic = () => {
 
     return taxRange[begin].tax;
   };
+  
+  const totalCPF = mainIncome * 0.2;
 
-  if (totalIncome > 0 && totalIncome > totalLoan) {
+  if (totalIncome > 0 && totalIncome > totalLoan && (totalIncome - totalCPF - totalTax) >= totalLoan) {
+    
     const percentageOfTax = (totalTax / totalIncome) * 100;
     const percentageOfSideIncome = (sideIncome / totalIncome) * 100;
     const percentageOfLoan = (totalLoan / totalIncome) * 100;
     const percentageOfCPF = ((mainIncome * 0.2) / totalIncome) * 100;
     const percentageOfRemaining =
       100 - percentageOfCPF - percentageOfTax - percentageOfLoan;
-
     //const series = [percentageOfCPF, percentageOfLoan, percentageOfRemaining, percentageOfSideIncome, percentageOfTax];
     //const sliceColor = ['#d4f0f0', '#8fcaca', '#cce2cb', '#b6cfb6', '#97c1a9'];
 

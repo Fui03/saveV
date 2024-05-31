@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     },
     modalHeader: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         alignItems: 'center',
         padding: 15,
         borderBottomWidth: 1,

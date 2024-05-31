@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   listTransaction: {
     backgroundColor: '#e0f7fa',
     borderRadius:10,
-    borderWidth:1
+    borderWidth:0.5
   },
   transactionItem: {
     flexDirection: 'row',
