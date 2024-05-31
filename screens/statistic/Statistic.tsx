@@ -85,7 +85,8 @@ const Statistic = () => {
           setTotalLoan(0);
         }
       });
-
+      
+      // console.log(totalIncome);
       return () => {
         fetchUserIncome();
         fetchUserLoan();
@@ -94,7 +95,9 @@ const Statistic = () => {
   }, []);
 
   useEffect(() => {
-    if (mainIncome && sideIncome) {
+    // console.log(`mainIncome: ${mainIncome}, sideIncome: ${sideIncome}`);
+    // console.log(if(mainIncome))
+    if (mainIncome !== undefined|| sideIncome !== undefined) {
       const computedTotalIncome = mainIncome + sideIncome;
       setTotalIncome(computedTotalIncome);
       setTotalTax(mainIncome * searchPercentageOfTax(mainIncome));
@@ -134,7 +137,7 @@ const Statistic = () => {
     return taxRange[begin].tax;
   };
 
-  if (totalIncome > 0) {
+  if (totalIncome > 0 && totalIncome > totalLoan) {
     const percentageOfTax = (totalTax / totalIncome) * 100;
     const percentageOfSideIncome = (sideIncome / totalIncome) * 100;
     const percentageOfLoan = (totalLoan / totalIncome) * 100;

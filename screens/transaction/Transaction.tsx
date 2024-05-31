@@ -183,12 +183,13 @@ const TransactionScreen = () => {
           <View style={styles.dateGroup}>
             <View style={styles.dailyTransactionHeaderContainer}>
               <Text style={styles.dateHeader}>{item}</Text>
-              <Text>Total: ${groupedTransactions[item].total}</Text>
+              <Text style={styles.dailyTransactionHeaderText}>Total: ${groupedTransactions[item].total}</Text>
             </View>
             <FlatList
               data={groupedTransactions[item].transactions}
               keyExtractor={(item) => item.id}
               renderItem={renderTransaction}
+              style={styles.listTransaction}
             />
           </View>
         )}
@@ -212,7 +213,8 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     alignItems: 'center',
-    justifyContent:'space-around'
+    justifyContent:'space-around',
+    marginBottom:10,
   },
   balanceContainer: {
     // borderWidth:1,
@@ -223,21 +225,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   dateGroup: {
-    backgroundColor: '#e0f7fa',
+    // backgroundColor: '#e0f7fa',
     padding: 10,
     marginVertical: 8,
     borderRadius: 8,
   },
   dataText: {
     fontSize:16,
-    marginLeft:10
-  
+    marginLeft:10,
+    marginRight:10,
+    marginTop:2,
+    marginBottom:2
   },
   dateHeader: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
     color:'gray',
-  
+    
+  },
+  listTransaction: {
+    backgroundColor: '#e0f7fa',
+    borderRadius:10,
+    borderWidth:1
   },
   transactionItem: {
     flexDirection: 'row',
@@ -357,7 +366,11 @@ const styles = StyleSheet.create({
   dailyTransactionHeaderContainer: {
     flexDirection:'row',
     justifyContent:'space-between'
-  }
+  },
+  dailyTransactionHeaderText: {
+    fontSize: 15,
+    color: "gray"
+  },
 });
 
 const pickerSelectStyles = StyleSheet.create({

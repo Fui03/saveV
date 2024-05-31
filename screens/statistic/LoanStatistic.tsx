@@ -117,7 +117,7 @@ export default function LoanStatistic() {
             }}>
                 <ScrollView contentContainerStyle={styles.overall}>
                     <View style={styles.modalHeader}>
-                        <Button title="Back" onPress={() => setIsEditable(false)}/>
+                        {/* <Button title="Back" onPress={() => setIsEditable(false)}/> */}
                         <Button title="Save" onPress={handleSave}/>
                     </View>
                    

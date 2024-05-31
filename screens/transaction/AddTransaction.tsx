@@ -38,15 +38,23 @@ const AddTransaction = () => {
       
       try {
 
-        if (amount && amount <= 0) {
-          Alert.alert("Error", "Please ensure the amount is greater than zero!");
-          return;
+        if (amount) {
+          if (amount <= 0 ) {
+            Alert.alert("Error", "Please ensure the amount is greater than zero!");
+            return;
+          }
+
+          if (isNaN(amount)) {
+            Alert.alert("Error", "Please enter a valid number!")
+            return;
+          }
         }
         
         if (!name) {
           Alert.alert("Error", "Please enter a name for the expenses!");
           return;
         }
+        
 
         const year = date.getFullYear().toString();
         const month = (date.getMonth() + 1).toString().padStart(2, "0");
