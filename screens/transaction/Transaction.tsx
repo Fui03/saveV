@@ -36,7 +36,7 @@ const TransactionScreen = () => {
     navigation.navigate('AddTransaction');
   };
   
-  const renderTransaction = ({ item }: { item: any }) => (
+  const renderTransaction = ({ item }: { item: Transaction }) => (
     <TouchableOpacity onPress={() =>handleTransactionDetail(item)}>
       <View style={styles.transactionItem}>
         <Text style={styles.dataText}>{item.name}</Text>
@@ -45,10 +45,12 @@ const TransactionScreen = () => {
     </TouchableOpacity>
   );
   
-  const groupedTransactions: { [key: string]: Transaction[] } = transactions.reduce((acc: { [key: string]: Transaction[] }, transaction) => {
+  const groupedTransactions: { [key: string]: {transactions: Transaction[], total: number} } = 
+  transactions.reduce((acc: { [key: string]: {transactions: Transaction[], total: number} }, transaction) => {
     const date = format(new Date(transaction.date), 'dd, EEE');
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(transaction);
+    if (!acc[date]) acc[date] = {transactions: [], total: 0};
+    acc[date].transactions.push(transaction);
+    acc[date].total += transaction.amount;
     return acc;
   }, {});
   
@@ -179,9 +181,12 @@ const TransactionScreen = () => {
         keyExtractor={(item) => item}
         renderItem={({ item }) => (
           <View style={styles.dateGroup}>
-            <Text style={styles.dateHeader}>{item}</Text>
+            <View style={styles.dailyTransactionHeaderContainer}>
+              <Text style={styles.dateHeader}>{item}</Text>
+              <Text>Total: ${groupedTransactions[item].total}</Text>
+            </View>
             <FlatList
-              data={groupedTransactions[item]}
+              data={groupedTransactions[item].transactions}
               keyExtractor={(item) => item.id}
               renderItem={renderTransaction}
             />
@@ -226,11 +231,13 @@ const styles = StyleSheet.create({
   dataText: {
     fontSize:16,
     marginLeft:10
+  
   },
   dateHeader: {
     fontSize: 16,
     fontWeight: 'bold',
-    color:'gray'
+    color:'gray',
+  
   },
   transactionItem: {
     flexDirection: 'row',
@@ -346,7 +353,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
     width: '100%'
-},
+  },
+  dailyTransactionHeaderContainer: {
+    flexDirection:'row',
+    justifyContent:'space-between'
+  }
 });
 
 const pickerSelectStyles = StyleSheet.create({
