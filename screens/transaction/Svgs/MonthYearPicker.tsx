@@ -113,7 +113,8 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight:"400",
     marginRight: 20
-  }
+  },
+
 });
 
 const pickerSelectStyles = StyleSheet.create({

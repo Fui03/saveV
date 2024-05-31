@@ -1,7 +1,6 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { TransactionProvider } from "@/screens/transaction/TransactionContext";
 import Register from "@/screens/authentication/Register";
 import Home from "@/screens/Home";
 import Login from "@/screens/authentication/Login";
@@ -53,7 +52,7 @@ export default function authStack() {
                     <Stack.Screen 
                         name="TransactionDetail" 
                         component={TransactionDetail}
-                        options={{headerShown: true, title: "Transaction Detail"}}/>
+                        options={{headerShown: true, title: "Expense Detail"}}/>
                 </Stack.Navigator>
             </NavigationContainer>
     );
