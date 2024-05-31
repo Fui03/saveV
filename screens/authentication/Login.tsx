@@ -107,7 +107,7 @@ export default function Login() {
                   <View style={{ flex: 10, justifyContent: 'center', alignItems: 'center' }}>
                   <View style={{ margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 35, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 }}>
                   <Text style={{ marginBottom: 15, textAlign: 'center' }}>Please verify your email address to proceed.</Text>
-                  <Button title="Resend Verification Email" onPress={resendVerificationEmail}/>
+                  <Button title="Resend Verification Email" onPress={resendVerificationEmail} testID="Resend"/>
                         </View>
                     </View>
                 </Modal>
@@ -143,7 +143,7 @@ export default function Login() {
                         {loading ? (
                             <ActivityIndicator size="large" color="#3498db" />
                         ) : (
-                            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                            <TouchableOpacity style={styles.loginButton} onPress={handleLogin} testID="Login">
                                 <Text style={styles.loginButtonText}>Login</Text>
                             </TouchableOpacity>
                         )}
