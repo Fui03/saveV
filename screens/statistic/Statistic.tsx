@@ -47,14 +47,14 @@ const Statistic = () => {
 
     if (user) {
       const db = getFirestore();
-      const incomeRef = doc(db, "users", user.uid, "Income or Loan", "Income");
-      const loanRef = doc(db, "users", user.uid, "Income or Loan", "Loan");
+      const incomeRef = doc(db, "users", user.uid);
+      const loanRef = doc(db, "users", user.uid);
 
       const fetchUserIncome = onSnapshot(incomeRef, (snapshot) => {
         if (snapshot.exists()) {
           const userData = snapshot.data();
           const mainIncome = userData.mainIncome || 0;
-          const sideIncome = userData.sideIncomes;
+          const sideIncome = userData.sideIncomes || [];
 
           const totalSideIncome = sideIncome.reduce(
             (acc: number, income: { name: string; amount: number }) =>
@@ -73,7 +73,7 @@ const Statistic = () => {
       const fetchUserLoan = onSnapshot(loanRef, (snapshot) => {
         if (snapshot.exists()) {
           const userData = snapshot.data();
-          const loan = userData.loan;
+          const loan = userData.loan || [];
 
           const totalLoan = loan.reduce(
             (acc: number, loan: { name: string; amount: number }) =>
@@ -97,7 +97,7 @@ const Statistic = () => {
   useEffect(() => {
     // console.log(`mainIncome: ${mainIncome}, sideIncome: ${sideIncome}`);
     // console.log(if(mainIncome))
-    if (mainIncome !== undefined|| sideIncome !== undefined) {
+    if (mainIncome !== undefined || sideIncome !== undefined) {
       const computedTotalIncome = mainIncome + sideIncome;
       setTotalIncome(computedTotalIncome);
       setTotalTax(mainIncome * searchPercentageOfTax(mainIncome));

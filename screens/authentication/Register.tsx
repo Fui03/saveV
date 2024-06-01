@@ -211,14 +211,19 @@ export default function Register() {
         <View id="recaptcha-container"></View>
         <KeyboardAvoidingView behavior="padding" />
         <View style={styles.container}>
-          <Modal
-            animationType="slide"
-            transparent={false}
-            visible={modalVisibility}
-            onRequestClose={() => {
-              setModalVisibility(!modalVisibility);
-            }}
-          >
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={modalVisibility}
+          onRequestClose={() =>{
+          setModalVisibility(!modalVisibility);
+        }}>
+            <View style={{ flex: 10, justifyContent: 'center', alignItems: 'center' }}>
+              <View style={{ margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 35, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 }}>
+                <Text style={{ marginBottom: 15, textAlign: 'center' }}>Please verify your email address to proceed.</Text>
+                <Button title="Resend Verification Email" onPress={resendVerificationEmail} testID="Resend"/>
+              </View>
+            </View>
           </Modal>
           <Image source={require('@/assets/images/logo1.png')} style={styles.logo_image} />
           <Text style={styles.title}>Register</Text>

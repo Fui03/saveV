@@ -23,7 +23,7 @@ export default function IncomeStatistic() {
             // const userRef = ref(db, `users/${user.uid}/Income`);
 
             const db = getFirestore();
-            const userRef = doc(db, "users", user.uid, "Income or Loan", "Income");
+            const userRef = doc(db, "users", user.uid);
 
             try {
 
@@ -53,7 +53,7 @@ export default function IncomeStatistic() {
                 await setDoc(userRef, {
                     mainIncome: mainIncome,
                     sideIncomes: sideIncomes,
-                })
+                },{merge:true})
                 
                 setIsEditable(false);
                 
@@ -95,7 +95,7 @@ export default function IncomeStatistic() {
                 // const snapshot = await get(userRef);
 
                 const db = getFirestore();
-                const userRef = doc(db, "users", user.uid, "Income or Loan", "Income");
+                const userRef = doc(db, "users", user.uid);
                 const snapshot = await getDoc(userRef);
 
                 if (snapshot.exists()) {

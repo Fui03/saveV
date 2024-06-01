@@ -162,7 +162,7 @@ export default function Login() {
                         </View>
                     </View>
                 </View>
-                <Button title="Login Using Phone Number" onPress={() => navigation.navigate('LoginPhoneNumber')}/>
+                {/* <Button title="Login Using Phone Number" onPress={() => navigation.navigate('LoginPhoneNumber')}/> */}
             </SafeAreaView>
         </TouchableWithoutFeedback>
     );
