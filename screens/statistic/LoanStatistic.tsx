@@ -22,7 +22,7 @@ export default function LoanStatistic() {
             // const userRef = ref(db, `users/${user.uid}/Loan`);
 
             const db = getFirestore();
-            const userRef = doc(db, "users", user.uid, "Income or Loan", "Loan");
+            const userRef = doc(db, "users", user.uid);
 
             try {
 
@@ -88,7 +88,7 @@ export default function LoanStatistic() {
                 // const snapshot = await get(userRef);
 
                 const db = getFirestore();
-                const userRef = doc(db, "users", user.uid, "Income or Loan", "Loan");
+                const userRef = doc(db, "users", user.uid);
                 const snapshot = await getDoc(userRef);
 
                 if (snapshot.exists()) {
