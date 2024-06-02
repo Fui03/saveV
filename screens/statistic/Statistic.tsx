@@ -231,7 +231,7 @@ const Statistic = () => {
 
         <PieChart
           data={data}
-          width={screenWidth * 0.9}
+          width={screenWidth}
           height={220}
           chartConfig={{
             backgroundColor: "#1cc910",
