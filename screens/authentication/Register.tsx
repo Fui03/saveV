@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   },
   logo_image: {
     width: 370, // Adjust width as needed
-    height: '25%', // Adjust height as needed
+    height: 200, // Adjust height as needed
     marginBottom: 20,
     alignItems: "center",
   },
