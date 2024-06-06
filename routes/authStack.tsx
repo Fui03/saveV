@@ -13,6 +13,7 @@ import LoanStatistic from "@/screens/statistic/LoanStatistic";
 import AddTransaction from "@/screens/transaction/AddTransaction";
 import Transaction from "@/screens/transaction/Transaction";
 import TransactionDetail from "@/screens/transaction/TransactionDetail";
+import AddPost from "@/screens/AddPost";
 
 export default function authStack() {
     const Stack = createNativeStackNavigator();
@@ -53,6 +54,10 @@ export default function authStack() {
                         name="TransactionDetail" 
                         component={TransactionDetail}
                         options={{headerShown: true, title: "Expense Detail", headerBackTitle:"Expenses"}}/>
+                    <Stack.Screen 
+                        name="AddPost" 
+                        component={AddPost}
+                        options={{headerShown: true, title: "New Post", headerBackTitle:"Home"}}/>
                 </Stack.Navigator>
             </NavigationContainer>
     );
