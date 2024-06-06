@@ -143,6 +143,7 @@ export default function Register() {
     await setDoc(documents, {
       userName,
       phoneNumber,
+      role : 'normal'
     });
   };
 
