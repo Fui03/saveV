@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyByqMP6gtdQ5l_aEdOmQ34ULaj300njvjY</string>
+	<string>AIzaSyDHm6cXvBb2aDwJvTOWqS3pris2kWg20rE</string>
 	<key>GCM_SENDER_ID</key>
-	<string>1070062035569</string>
+	<string>1040934992019</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.moneyMiracle.saveV</string>
 	<key>PROJECT_ID</key>
-	<string>savev-d820f</string>
+	<string>savev-3a33f</string>
 	<key>STORAGE_BUCKET</key>
-	<string>savev-d820f.appspot.com</string>
+	<string>savev-3a33f.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:1070062035569:ios:b9f0c93c9e5315607cf1d0</string>
+	<string>1:1040934992019:ios:a63c9051ae3b5a3bc0f566</string>
 </dict>
 </plist>

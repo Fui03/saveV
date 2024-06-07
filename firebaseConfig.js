@@ -8,13 +8,12 @@ import { getFirestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAaQPgTlQnwywOczMJB6821TKfgM1sv-tk",
-  authDomain: "savev-d820f.firebaseapp.com",
-  databaseURL: "https://savev-d820f-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "savev-d820f",
-  storageBucket: "savev-d820f.appspot.com",
-  messagingSenderId: "1070062035569",
-  appId: "1:1070062035569:web:0b072bee8276d43e7cf1d0"
+  apiKey: "AIzaSyCgG0ivvIvy5VBOmCdIRaGPotXnmdPvtfQ",
+  authDomain: "savev-3a33f.firebaseapp.com",
+  projectId: "savev-3a33f",
+  storageBucket: "savev-3a33f.appspot.com",
+  messagingSenderId: "1040934992019",
+  appId: "1:1040934992019:web:4cbd31fdbd3bc1b9c0f566"
 };
 
 // Initialize Firebase

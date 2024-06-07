@@ -1,14 +1,13 @@
 {
   "project_info": {
-    "project_number": "1070062035569",
-    "firebase_url": "https://savev-d820f-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "project_id": "savev-d820f",
-    "storage_bucket": "savev-d820f.appspot.com"
+    "project_number": "1040934992019",
+    "project_id": "savev-3a33f",
+    "storage_bucket": "savev-3a33f.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1070062035569:android:484dc7877611336e7cf1d0",
+        "mobilesdk_app_id": "1:1040934992019:android:1342e425df7592a4c0f566",
         "android_client_info": {
           "package_name": "com.moneyMiracle.saveV"
         }
@@ -16,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBndkVsgdvACxsyM1bVq6rk3gm0fV7lHm8"
+          "current_key": "AIzaSyDhSXjdJiRcDAD5QdbQxVRQZDdpw3inVYY"
         }
       ],
       "services": {
