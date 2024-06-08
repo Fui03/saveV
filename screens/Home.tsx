@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, Text, StyleSheet , Button, Image, View, FlatList} from 'react-native';
+import { SafeAreaView, Text, StyleSheet , Button, Image, View, FlatList, TouchableOpacity} from 'react-native';
 import { getAuth, signOut } from "firebase/auth";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation} from "@react-navigation/native";
@@ -13,48 +13,51 @@ type Post = {
   spendingRange: number;
   imageURLs: string[];
   timestamp: any; 
+  likes: number;
 };
+
 
 const Home = () => {
 
+    const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
-  const [posts, setPosts] = useState<Post[]>([]);
+    const [posts, setPosts] = useState<Post[]>([]);
 
-  useEffect(() => {
-      const db = getFirestore();
-      const postsRef = collection(db, 'posts');
-      const q = query(postsRef, orderBy('timestamp', 'desc'));
+    useEffect(() => {
+        const db = getFirestore();
+        const postsRef = collection(db, 'posts');
+        const q = query(postsRef, orderBy('timestamp', 'desc'));
 
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-          const postsData : Post[] = [];
-          snapshot.forEach((doc) => {
-              postsData.push({ id: doc.id, ...doc.data() } as Post);
-          });
-          setPosts(postsData);
-      });
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const postsData : Post[] = [];
+            snapshot.forEach((doc) => {
+                postsData.push({ id: doc.id, ...doc.data() } as Post);
+            });
+            setPosts(postsData);
+        });
 
-      return () => unsubscribe();
-  }, []);
+        return () => unsubscribe();
+    }, []);
 
-  const renderItem = ({ item } : {item: Post}) => (
-      <View style={styles.card}>
-          {item.imageURLs.length > 0 && (
-                <Image source={{ uri: item.imageURLs[0] }} style={styles.cardImage} />
-          )}
-          <Text style={styles.cardTitle}>{item.title}</Text>
-          <Text style={styles.cardCaption}>{item.caption}</Text>
-      </View>
-  );
+    const renderItem = ({ item } : {item: Post}) => (
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PostDetails', { post: item })}>
+            {item.imageURLs.length > 0 && (
+                    <Image source={{ uri: item.imageURLs[0] }} style={styles.cardImage} />
+            )}
+            <Text style={styles.cardTitle}>{item.title}</Text>
+            <Text style={styles.cardCaption}>{item.caption}</Text>
+        </TouchableOpacity>
+    );
 
-  return (
-      <SafeAreaView style={styles.container}>
-          <FlatList
-              data={posts}
-              renderItem={renderItem}
-              keyExtractor={(item) => item.id}
-          />
-      </SafeAreaView>
-  );
+    return (
+        <SafeAreaView style={styles.container}>
+            <FlatList
+                data={posts}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+            />
+        </SafeAreaView>
+    );
 };
 
 const styles = StyleSheet.create({

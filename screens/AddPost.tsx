@@ -6,7 +6,6 @@ import { addDoc, collection, getFirestore, serverTimestamp } from 'firebase/fire
 import Swiper from 'react-native-swiper';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 
-// Define the navigation parameter types
 type AddPostRouteParams = {
     images: string[];
 };
@@ -14,11 +13,13 @@ type AddPostRouteParams = {
 type AddPostRouteProp = RouteProp<{ AddPost: AddPostRouteParams }, 'AddPost'>;
 
 export default function AddPost() {
+ 
     const [images, setImages] = useState<string[]>([]);
     const [title, setTitle] = useState<string>('');
     const [caption, setCaption] = useState<string>('');
     const [spendingRange, setSpendingRange] = useState<number | undefined>();
     const navigation = useNavigation();
+ 
     const route = useRoute<AddPostRouteProp>();
 
     useEffect(() => {
@@ -64,13 +65,15 @@ export default function AddPost() {
                     spendingRange: spendingRange,
                     imageURLs: imageURLs,
                     timestamp: serverTimestamp(),
+                    likes: 0,
+                    comments: [],
                 });
 
                 Alert.alert("Done");
                 setImages([]);
                 setCaption('');
                 setSpendingRange(0);
-                navigation.goBack(); // Go back after saving the post
+                navigation.goBack(); 
             } catch (e) {
                 Alert.alert("Error", "Try Again");
             }

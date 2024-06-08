@@ -14,6 +14,7 @@ import AddTransaction from "@/screens/transaction/AddTransaction";
 import Transaction from "@/screens/transaction/Transaction";
 import TransactionDetail from "@/screens/transaction/TransactionDetail";
 import AddPost from "@/screens/AddPost";
+import PostDetails from "@/screens/PostDetails";
 
 export default function authStack() {
     const Stack = createNativeStackNavigator();
@@ -57,6 +58,10 @@ export default function authStack() {
                     <Stack.Screen 
                         name="AddPost" 
                         component={AddPost}
+                        options={{headerShown: true, title: "New Post", headerBackTitle:"Home"}}/>
+                    <Stack.Screen 
+                        name="PostDetails" 
+                        component={PostDetails}
                         options={{headerShown: true, title: "New Post", headerBackTitle:"Home"}}/>
                 </Stack.Navigator>
             </NavigationContainer>
