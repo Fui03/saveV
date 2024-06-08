@@ -168,7 +168,7 @@ type Post = {
 
     const handleDoubleTap = useCallback((event: HandlerStateChangeEvent<any>) => {
       if (user) {
-        handleLike();
+        doubleTapLike();
         const nativeEvent = event.nativeEvent;
         heartX.value = nativeEvent.x - 50;
         heartY.value = nativeEvent.y - 50; 
@@ -180,6 +180,27 @@ type Post = {
       }
     }, [user, handleLike])
 
+    const doubleTapLike = useCallback(
+      async () => {
+        
+        if (user) {
+          const likesRef = collection(db, `posts/${post.id}/likes`);
+          const userLikeRef = doc(likesRef, user.uid);
+    
+          if (!liked){
+    
+            await setDoc(userLikeRef, {
+              userId: user.uid,
+              timestamp: new Date(),
+            });
+    
+            setLikes(likes + 1);
+            setLiked(true);
+            
+            await updateDoc(postRef, { likes: likes + 1 });
+          }
+        }
+      }, [liked, likes, postRef, user, post.id]);
 
     const renderContent = useMemo(
       () => (

@@ -45,7 +45,6 @@ const Home = () => {
                     <Image source={{ uri: item.imageURLs[0] }} style={styles.cardImage} />
             )}
             <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardCaption}>{item.caption}</Text>
         </TouchableOpacity>
     );
 
@@ -55,6 +54,7 @@ const Home = () => {
                 data={posts}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id}
+                numColumns={2}
             />
         </SafeAreaView>
     );
@@ -66,26 +66,27 @@ const styles = StyleSheet.create({
       backgroundColor: '#f5f6fa',
   },
   card: {
-      backgroundColor: '#fff',
-      borderRadius: 10,
-      padding: 20,
-      marginHorizontal: 20,
-      marginVertical: 10,
-      shadowColor: '#000',
-      shadowOffset: {
-          width: 0,
-          height: 2,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5,
-      alignItems:'center',
-      justifyContent:'center'
+        flex:1,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 20,
+        // marginHorizontal: 20,
+        marginVertical: 5,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+        alignItems:'center',
+        justifyContent:'center'
   },
   cardImage: {
-      width: 150,
-      height: 150,
-      marginRight: 10,
+      width: 180,
+      height: 180,
+    //   marginRight: 10,
   },
   cardTitle: {
       fontSize: 18,
