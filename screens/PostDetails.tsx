@@ -48,9 +48,6 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
 
     const [commentLikedMap, setCommentLikedMap] = useState<{ [key: string]: boolean }>({});
 
-
-
-    
     const db = getFirestore();
     const auth = getAuth();
     const user = auth.currentUser;
@@ -117,8 +114,6 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
         if (user) {
           const userNameRef = doc(db, `users`, user.uid);
           const saveRef = doc(db,`users/${user.uid}/saves/${post.id}`)
-          // const savesRef = collection(db, `users/${user.uid}/saves`)
-          // const q = query(savesRef, where(`postid`, '==', post.id));
 
           await getDoc(saveRef).then((snapshot) => {
             if (snapshot.exists()) {
@@ -542,7 +537,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
       marginLeft: 10,
     },
     comment: {
-      fontSize: 14,
+      fontSize: 17,
       marginVertical: 5,
       paddingHorizontal: 10,
     },

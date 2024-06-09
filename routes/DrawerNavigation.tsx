@@ -10,6 +10,7 @@ import CustomDrawerContent from "./customDrawer";
 import ResetPassword from "@/screens/setting/ResetPassword";
 import ResetEmail from "@/screens/setting/ResetEmail";
 import UpdateProfile from "@/screens/setting/UpdateProfile";
+import PreferenceManagement from "@/screens/setting/PreferenceManagement";
 
 
 
@@ -38,6 +39,10 @@ export default function DrawerNavigation() {
                 name = "UpdateProfile"
                 component={UpdateProfile}
                 options={{title:"Update Profile"}}/>
+            <Drawer.Screen
+                name = "PreferenceManagement"
+                component={PreferenceManagement}
+                options={{title:"Preference Management"}}/>
         </Drawer.Navigator>
     );
 }
