@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, Text, StyleSheet , Button, Image, View, FlatList, TouchableOpacity} from 'react-native';
-import { getAuth, signOut } from "firebase/auth";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation} from "@react-navigation/native";
 import { collection, getFirestore, onSnapshot, orderBy, query } from 'firebase/firestore';

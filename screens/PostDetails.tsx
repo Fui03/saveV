@@ -2,23 +2,32 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { SafeAreaView, Pressable ,Text, StyleSheet, Image, View, Button, TextInput, ScrollView, FlatList, Dimensions, KeyboardAvoidingView, Alert } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
-import { addDoc, collection, doc, getFirestore, onSnapshot, updateDoc, getDocs, query, where, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, getFirestore, onSnapshot, updateDoc, getDocs, query, where, setDoc, deleteDoc, getDoc, orderBy, increment } from 'firebase/firestore';
 import Swiper from 'react-native-swiper';
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome } from '@expo/vector-icons';  
 import { HandlerStateChangeEvent, TapGestureHandler, TapGestureHandlerEventPayload} from 'react-native-gesture-handler';  
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
-  
-type Post = {
-      id: string;
-      title: string;
-      caption: string;
-      spendingRange: number;
-      imageURLs: string[];
-      timestamp: any; 
-      likes: number;
-    };
 
+  
+  type Post = {
+        id: string;
+        title: string;
+        caption: string;
+        spendingRange: number;
+        imageURLs: string[];
+        timestamp: any; 
+        likes: number;
+  };
+
+  type Comments = {
+    id: string,
+    userName: string,
+    comment: string,
+    likes: number,
+  }
+  
+  
   type PostDetailsRouteParams = {
     post: Post;
   };
@@ -33,8 +42,14 @@ type Post = {
     const [likes, setLikes] = useState<number>(post.likes || 0);
     const [liked, setLiked] = useState<boolean>(false);
     const [comment, setComment] = useState<string>('');
-    const [comments, setComments] = useState<{comment: string, userName: string}[]>([]);
+    const [comments, setComments] = useState<Comments[]>([]);
     const [userName, setUserName] = useState<string | undefined>();
+    const [saved, setSaved] = useState<boolean>(false);
+
+    const [commentLikedMap, setCommentLikedMap] = useState<{ [key: string]: boolean }>({});
+
+
+
     
     const db = getFirestore();
     const auth = getAuth();
@@ -43,24 +58,44 @@ type Post = {
 
     const doubleTapRef = useRef();
 
+    //Comments
     useEffect(() => {
-
       const commentsRef = collection(db, `posts/${post.id}/comments`);
+      const unsubscribe = onSnapshot(commentsRef, async (snapshot) => {
+        const commentsData: Comments[] = [];
+        const likesPromises: Promise<void>[] = [];
     
-      const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
-        const commentsData: {comment: string, userName: string}[] = [];
         snapshot.forEach((doc) => {
           const data = doc.data();
-          commentsData.push({comment: data.comment, userName: data.userName})
-        })
-
+          const commentId = doc.id;
+          commentsData.push({
+            id: commentId,
+            comment: data.comment,
+            userName: data.userName,
+            likes: data.likes || 0,
+          });
+    
+          likesPromises.push(
+            getDocs(collection(db, `posts/${post.id}/comments/${commentId}/likes`)).then((likesSnapshot) => {
+              likesSnapshot.forEach((likeDoc) => {
+                if (likeDoc.id === user?.uid) {
+                  setCommentLikedMap((prev) => ({ ...prev, [commentId]: true }));
+                }
+              });
+            })
+          );
+        });
+    
+        await Promise.all(likesPromises);
         setComments(commentsData);
       });
-
-      return () => unsubscribe();
     
-    }, [post.id]);
+      return () => unsubscribe();
+    }, [post.id, user]);
+    
 
+
+    //Post likes
     useEffect(() => {
 
       if (user) {
@@ -77,27 +112,34 @@ type Post = {
     }, [post.id, user]);
     
     useEffect(() => {
-        const fetchUserData = async () => {
-            const auth = getAuth();
-            const user = auth.currentUser;
 
-            if (user) {
+      const unsubscribe = async () => {
+        if (user) {
+          const userNameRef = doc(db, `users`, user.uid);
+          const saveRef = doc(db,`users/${user.uid}/saves/${post.id}`)
+          // const savesRef = collection(db, `users/${user.uid}/saves`)
+          // const q = query(savesRef, where(`postid`, '==', post.id));
 
-                const db = getFirestore();
-                const userRef = doc(db, `users`, user.uid);
-                const snapshot = await getDoc(userRef);
-
-                if (snapshot.exists()) {
-                    const userData = snapshot.data();
-                    setUserName(userData.userName);
-                } else {
-                    Alert.alert("Error", "No data found!");
-                }
+          await getDoc(saveRef).then((snapshot) => {
+            if (snapshot.exists()) {
+              setSaved(true);
             }
+          })
+          
+          
+  
+          await getDoc(userNameRef).then((snapshot) => {
+            if (snapshot.exists()) {
+              const userData = snapshot.data();
+              setUserName(userData.userName);
+              }
+              })
+              
         }
 
-      fetchUserData();
+      }
 
+      unsubscribe();
     },[post.id, user])
 
     const handleLike = useCallback(
@@ -138,13 +180,36 @@ type Post = {
             comment: comment,
             userId: user?.uid,
             userName: userName,
+            likes: 0,  
             timestamp: new Date(),
           });
         
           setComment('');
         }
-      },[comment, post.id, user])
-
+    },[comment, post.id, user])
+    
+    const handleCommentLike = useCallback(
+      async(commentId: string, isLiked:boolean) => {
+        if (user) {
+          const commentRef = doc(db, `posts/${post.id}/comments/${commentId}`);
+          const commentLikesRef = collection(db, `posts/${post.id}/comments/${commentId}/likes`);
+          const userCommentLikeRef = doc(commentLikesRef, user.uid);
+    
+          if (isLiked) {
+            await deleteDoc(userCommentLikeRef);
+            await updateDoc(commentRef, { likes: increment(-1) });
+            setCommentLikedMap((prev) => ({ ...prev, [commentId]: false }));
+          } else {
+            await setDoc(userCommentLikeRef, {
+              userId: user.uid,
+              timestamp: new Date(),
+            });
+            await updateDoc(commentRef, { likes: increment(1) });
+            setCommentLikedMap((prev) => ({ ...prev, [commentId]: true }));
+          }
+        }
+      },[post.id, user]
+    )
 
     const commentInputRef = useRef<TextInput>(null);
 
@@ -174,7 +239,7 @@ type Post = {
         heartY.value = nativeEvent.y - 50; 
         scale.value = withSpring(1, undefined, (isFinished) => {
           if (isFinished) {
-            scale.value = withDelay(100, withSpring(0));
+            scale.value = withDelay(1, withSpring(0));
           }
         });
       }
@@ -202,6 +267,23 @@ type Post = {
         }
       }, [liked, likes, postRef, user, post.id]);
 
+    const handleSave = useCallback(
+      async() => {
+        if (user) {
+          const saveRef = collection(db, `users/${user.uid}/saves`);
+          const userSaveRef = doc(saveRef, post.id);
+
+          if (saved) {
+            await deleteDoc(userSaveRef);
+            setSaved(false);
+          } else {
+            await setDoc(userSaveRef, post);
+            setSaved(true);
+          }
+        }
+      },[post.id, user, saved]
+    )
+
     const renderContent = useMemo(
       () => (
         <View>
@@ -228,7 +310,7 @@ type Post = {
                       ))}
                     </Swiper>
                     <Animated.View style={[styles.heart, heartStyle]}>
-                  <MaterialCommunityIcons name="heart" size={100} color="red"/>
+                  <MaterialCommunityIcons name="heart" size={100} color="red" style={{opacity:0.8}}/>
                 </Animated.View>
                   </Animated.View>
                 </TapGestureHandler>
@@ -250,19 +332,37 @@ type Post = {
       )
       
       return (
-        
-        
         <SafeAreaView style={styles.container}>                  
                   <FlatList
                     ListHeaderComponent={renderContent}
                     ListFooterComponent={renderEnding}
                     data={comments}
                     keyExtractor={(item, index) => index.toString()}
-                    renderItem={({ item }) => 
-                      <View style={styles.commentContainer}>
-                        <Text style={styles.commentName}>{item.userName}</Text>
-                        <Text style={styles.comment}>{item.comment}</Text>
-                      </View>
+                    renderItem={({ item }) => {
+
+                      const isLiked = commentLikedMap[item.id] || false;
+
+                      return (
+                        <View style={styles.commentContainer}>
+                          <Text style={styles.commentName}>{item.userName}</Text>
+                          <View style={styles.commentLikeContainer}>
+                            <View style={{width:'85%'}}>
+                              <Text style={styles.comment}>{item.comment}</Text>
+                            </View>
+                            <View style={styles.commentLikeNumberContainer}>
+                              <Pressable onPress={() => handleCommentLike(item.id, isLiked)}>
+                                <MaterialCommunityIcons
+                                  name={isLiked ? "heart" : "heart-outline"}
+                                  size={22}
+                                  color={isLiked ? "red" : "black"}
+                                />
+                              </Pressable>
+                              <Text style={{paddingLeft:3, paddingBottom:3}}>{item.likes}</Text>
+                            </View>
+                          </View>
+                        </View>
+                      )
+                    }
                     }
                     />
                 
@@ -289,6 +389,7 @@ type Post = {
                         </Pressable>
                         <Text style={styles.likes}>{likes}</Text>
                       </View>
+                      
         
                       <View style={styles.singleFeatureContainer}>
                         <Pressable onPress={focusOnCommentInput} style={styles.commentIcon}>
@@ -297,6 +398,15 @@ type Post = {
                         <Text style={styles.commentNum}>{comments.length}</Text>
                       </View>
         
+                      <View style={styles.singleFeatureContainer}>
+                        <Pressable onPress={handleSave}>
+                        <MaterialCommunityIcons 
+                          name= {saved ? 'bookmark': "bookmark-outline" }
+                          size={28} 
+                          color={saved ? 'blue' : 'black'} />
+                        </Pressable>
+                      </View>
+
                     </SafeAreaView>
         
                   </View>
@@ -333,9 +443,23 @@ type Post = {
     commentContainer: {
       borderBottomWidth: 1,
       borderColor: 'gray',
-      height:70,
+      paddingVertical:15,
+      // height:70,
       justifyContent:'center',
       marginHorizontal:5,
+    },
+    commentLikeContainer: {
+      flexDirection:'row',
+      justifyContent:'space-between',
+      // borderWidth:1
+      
+    },
+    commentLikeNumberContainer: {
+      flexDirection:'row',
+      alignItems:'center',
+      // marginRight:5,
+      // justifyContent:'center',
+      // borderWidth:1
     },
     endingContainer: {
       height:200,
@@ -397,7 +521,7 @@ type Post = {
       fontWeight:'bold',
       marginVertical: 5,
       textAlign: 'center',
-      marginRight: 15,
+      // marginRight: 15,
     },
     bottomContentTitle: {
       paddingLeft:15,
