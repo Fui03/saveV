@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { SafeAreaView, Pressable ,Text, StyleSheet, Image, View, Button, TextInput, ScrollView, FlatList, Dimensions, KeyboardAvoidingView, Alert } from 'react-native';
+import { SafeAreaView, Pressable ,Text, StyleSheet, Image, View, Button, TextInput, ScrollView, FlatList, Dimensions, KeyboardAvoidingView, Alert, ListRenderItem, ListRenderItemInfo } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
 import { addDoc, collection, doc, getFirestore, onSnapshot, updateDoc, getDocs, query, where, setDoc, deleteDoc, getDoc, orderBy, increment } from 'firebase/firestore';
@@ -25,6 +25,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
     userName: string,
     comment: string,
     likes: number,
+    replies?: Comments[]
   }
   
   
@@ -46,7 +47,13 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
     const [userName, setUserName] = useState<string | undefined>();
     const [saved, setSaved] = useState<boolean>(false);
 
+    const [replies, setReplies] = useState<{[key:string]: Comments[]}>({});
+    const [isReplying, setIsReplying] = useState(false);
+    const [replyTo, setReplyTo] = useState<string | null>(null);
+    const [replyName, setReplyName] = useState<string>('')
+
     const [commentLikedMap, setCommentLikedMap] = useState<{ [key: string]: boolean }>({});
+    const [showRepliesMap, setShowRepliesMap] = useState<{ [key: string]: boolean }>({});
 
     const db = getFirestore();
     const auth = getAuth();
@@ -137,6 +144,8 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
       unsubscribe();
     },[post.id, user])
 
+   
+
     const handleLike = useCallback(
       async () => {
         
@@ -165,23 +174,63 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
         }
       }, [liked, likes, postRef, user, post.id]);
 
+      const handleReplyLike = useCallback(
+        async (commentId: string, replyId: string, isLiked: boolean) => {
+          if (user) {
+            const replyRef = doc(db, `posts/${post.id}/comments/${commentId}/replies/${replyId}`);
+            const replyLikesRef = collection(db, `posts/${post.id}/comments/${commentId}/replies/${replyId}/likes`);
+            const userReplyLikeRef = doc(replyLikesRef, user.uid);
+      
+            if (isLiked) {
+              await deleteDoc(userReplyLikeRef);
+              await updateDoc(replyRef, { likes: increment(-1) });
+              setCommentLikedMap((prev) => ({ ...prev, [replyId]: false }));
+            } else {
+              await setDoc(userReplyLikeRef, {
+                userId: user.uid,
+                timestamp: new Date(),
+              });
+              await updateDoc(replyRef, { likes: increment(1) });
+              setCommentLikedMap((prev) => ({ ...prev, [replyId]: true }));
+            }
+          }
+        }, [post.id, user]
+      );
+      
+
     const handleComment = useCallback(
       async () => {
         
         if (comment.trim()) {
-          const commentsRef = collection(db, `posts/${post.id}/comments`);
-        
-          await addDoc(commentsRef, {
-            comment: comment,
-            userId: user?.uid,
-            userName: userName,
-            likes: 0,  
-            timestamp: new Date(),
-          });
-        
+          if (isReplying && replyTo) {
+            const repliesRef = collection(db, `posts/${post.id}/comments/${replyTo}/replies`);
+            await addDoc(repliesRef, {
+              comment: comment.replace(replyName, ''),
+              userId: user?.uid,
+              userName: userName,
+              likes: 0,
+              timestamp: new Date(),
+            });
+
+            fetchReplies(replyTo);
+          
+          } else {
+            const commentsRef = collection(db, `posts/${post.id}/comments`);
+            await addDoc(commentsRef, {
+              comment: comment,
+              userId: user?.uid,
+              userName: userName,
+              likes: 0,
+              timestamp: new Date(),
+            });
+          }
           setComment('');
+          setIsReplying(false);
+          setReplyTo(null);
+          setReplyName('');
         }
-    },[comment, post.id, user])
+      },[comment, post.id, user, replyTo]
+    );
     
     const handleCommentLike = useCallback(
       async(commentId: string, isLiked:boolean) => {
@@ -223,7 +272,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
       transform: [{ scale: scale.value }],
       opacity: scale.value,
       left: heartX.value,
-    top: heartY.value,
+      top: heartY.value,
     }));
 
     const handleDoubleTap = useCallback((event: HandlerStateChangeEvent<any>) => {
@@ -279,21 +328,54 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
       },[post.id, user, saved]
     )
 
+    const handlePressReply = (commentId: string, userName: string) => {
+      setIsReplying(true);
+      setReplyTo(commentId);
+      setReplyName(`@${userName} `);
+      setComment(`@${userName} `);
+      commentInputRef.current?.focus();
+    }
+
+    const fetchReplies = async (commentId: string) => {
+      const repliesRef = collection(db, `posts/${post.id}/comments/${commentId}/replies`);
+      const repliesDocs = await getDocs(repliesRef);
+
+      const repliesData : Comments[] = repliesDocs.docs.map((doc) => ({
+        id: doc.id,
+        userName: doc.data().userName,
+        comment: doc.data().comment,
+        likes: doc.data().like || 0,
+      }))
+
+      setReplies((prev) => ({
+        ...prev,
+        [commentId]: repliesData
+      }))
+    }
+
+    const handleShowReplies = (commentId: string) => {
+      setShowRepliesMap((prev) => ({
+        ...prev,
+        [commentId] : !prev[commentId],
+      }));
+
+      if (!showRepliesMap[commentId]) {
+        fetchReplies(commentId);
+      }
+    }
+
     const renderContent = useMemo(
       () => (
         <View>
           <View style={styles.contentContainer}>
               <TapGestureHandler
-                    waitFor={doubleTapRef}
-                    onActivated={() => console.log('Once')}>
+                    waitFor={doubleTapRef}>
                 <TapGestureHandler
                   maxDelayMs={500} 
                   ref={doubleTapRef}
                   numberOfTaps={2}
                   onActivated={handleDoubleTap}>
-
                   <Animated.View style={styles.photoContainer}>
-                    
                     <Swiper 
                       style={styles.swiper} 
                       showsPagination={true}
@@ -325,6 +407,66 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
           <Text style={styles.ending}>End</Text>
         </View>
       )
+
+      const renderComments = ({item}: ListRenderItemInfo<any>) => {
+        const isLiked = commentLikedMap[item.id] || false;
+        const showReplies = showRepliesMap[item.id] || false;
+
+        return (
+          
+          <View style={styles.commentContainer}>
+            <Text style={styles.commentName}>{item.userName}</Text>
+            <View style={styles.commentLikeContainer}>
+              <View style={{width:'85%'}}>
+                <Text style={styles.comment}>{item.comment}</Text>
+              </View>
+              <View style={styles.commentLikeNumberContainer}>
+              <Pressable onPress={() => handleCommentLike(item.id, isLiked)}>
+                <MaterialCommunityIcons
+                  name={isLiked ? "heart" : "heart-outline"}
+                  size={22}
+                  color={isLiked ? "red" : "black"}
+                />
+              </Pressable>
+              <Text style={{paddingLeft:3, paddingBottom:3}}>{item.likes}</Text>
+              </View>
+            </View>
+            <Pressable onPress={() => handlePressReply(item.id, item.userName)}>
+              <Text style={styles.replyButton}>Reply</Text>
+            </Pressable>
+
+            <Pressable onPress={() => handleShowReplies(item.id)}>
+              <Text style={styles.showRepliesText}>{showReplies ? 'Hide replies' : 'Show replies'}</Text>
+            </Pressable>
+
+            {showReplies && replies[item.id] && (
+              <FlatList
+                data={replies[item.id]}
+                keyExtractor={(reply) => reply.id}
+                renderItem={({ item: reply }) => (
+                  <View style={styles.replyContainer}>
+                    <Text style={styles.replyName}>{reply.userName}</Text>
+                    <View style={styles.replyCommentContainer}>
+                      <Text style={styles.replyComment}>{`@${reply.userName} ${reply.comment}`}</Text>
+                      <View style={styles.commentLikeNumberContainer}>
+                        <Pressable onPress={() => handleReplyLike(item.id, reply.id, commentLikedMap[reply.id])}>
+                          <MaterialCommunityIcons
+                            name={commentLikedMap[reply.id] ? "heart" : "heart-outline"}
+                            size={22}
+                            color={commentLikedMap[reply.id] ? "red" : "black"}
+                          />
+                        </Pressable>
+                        <Text style={{ paddingLeft: 3, paddingBottom: 3 }}>{reply.likes}</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              />
+            )}
+            
+          </View>
+        )
+      }
       
       return (
         <SafeAreaView style={styles.container}>                  
@@ -333,34 +475,8 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
                     ListFooterComponent={renderEnding}
                     data={comments}
                     keyExtractor={(item, index) => index.toString()}
-                    renderItem={({ item }) => {
-
-                      const isLiked = commentLikedMap[item.id] || false;
-
-                      return (
-                        <View style={styles.commentContainer}>
-                          <Text style={styles.commentName}>{item.userName}</Text>
-                          <View style={styles.commentLikeContainer}>
-                            <View style={{width:'85%'}}>
-                              <Text style={styles.comment}>{item.comment}</Text>
-                            </View>
-                            <View style={styles.commentLikeNumberContainer}>
-                              <Pressable onPress={() => handleCommentLike(item.id, isLiked)}>
-                                <MaterialCommunityIcons
-                                  name={isLiked ? "heart" : "heart-outline"}
-                                  size={22}
-                                  color={isLiked ? "red" : "black"}
-                                />
-                              </Pressable>
-                              <Text style={{paddingLeft:3, paddingBottom:3}}>{item.likes}</Text>
-                            </View>
-                          </View>
-                        </View>
-                      )
-                    }
-                    }
-                    />
-                
+                    renderItem={renderComments}
+                  />
         
                   <View style={styles.footer}>
                     <TextInput
@@ -368,7 +484,15 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
                       style={styles.commentInput}
                       placeholder="Add a comment"
                       value={comment}
-                      onChangeText={setComment}
+                      onChangeText={(text) => {
+                        if (isReplying && !text.startsWith(replyName)) {
+                          setIsReplying(false);
+                          setReplyName('');
+                          setReplyTo(null);
+                        }
+
+                        setComment(text);
+                      }}
                       onSubmitEditing={handleComment}
                     />
         
@@ -470,6 +594,12 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
       marginLeft:5,
       marginRight:5,
     },
+    replyCommentContainer: {
+      flexDirection:'row',
+      justifyContent:'space-between',
+      width:'107%',
+      // borderWidth:1
+    },
     swiper: {
       height: 400,
       marginBottom:20,
@@ -548,6 +678,30 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
     },
     commentIcon: {
       marginBottom:2,
+    },
+    replyButton: {
+      color:'gray',
+      marginLeft:10,
+    },
+    showRepliesText: {
+      color:'gray',
+      marginLeft:15,
+      paddingVertical:3,
+    },
+    replyContainer: {
+      justifyContent:'center',
+      // borderWidth:1,
+      paddingVertical:5,
+      paddingHorizontal:20,
+      alignItems:'flex-start'
+    },
+    replyName: {
+      fontSize:14,
+      fontWeight: 'bold'
+    },
+    replyComment: {
+      fontSize:16,
+
     },
     footer: {
       position: 'absolute',
