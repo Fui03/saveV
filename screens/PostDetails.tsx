@@ -94,7 +94,6 @@ import { Entypo } from '@expo/vector-icons';
             replyCount: data.replyCount || 0,
           });
 
-
           likesPromises.push(
             getDocs(collection(db, `posts/${post.id}/comments/${commentId}/likes`)).then((likesSnapshot) => {
               likesSnapshot.forEach((likeDoc) => {
@@ -131,6 +130,7 @@ import { Entypo } from '@expo/vector-icons';
       }
     }, [post.id, user]);
     
+    //saves
     useEffect(() => {
 
       const unsubscribe = async () => {
@@ -560,8 +560,6 @@ import { Entypo } from '@expo/vector-icons';
                       onChangeText={(text) => {
                         if (!isReplying) {
                           setIsReplying(false);
-                          // setReplyName('');
-                          // setReplyTo(null);
                         }
 
                         setComment(text);
@@ -674,7 +672,7 @@ import { Entypo } from '@expo/vector-icons';
       // borderWidth:1
     },
     statusBarContainer: {
-      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
       padding: 10,
       alignItems: 'center',
       position:'absolute',

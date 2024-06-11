@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaView, Text, StyleSheet , Button, Image, View, FlatList, TouchableOpacity} from 'react-native';
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation} from "@react-navigation/native";
-import { collection, getFirestore, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, getFirestore, limit, onSnapshot, orderBy, query, startAfter } from 'firebase/firestore';
 
 
 type Post = {
@@ -21,29 +21,60 @@ const Home = () => {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
     const [posts, setPosts] = useState<Post[]>([]);
+    const [lastVisible, setLastVisible] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
+    const fetchPosts = async (lastDoc?: any) => {
+        setLoading(true);
         const db = getFirestore();
         const postsRef = collection(db, 'posts');
-        const q = query(postsRef, orderBy('timestamp', 'desc'));
+        let q = query(postsRef, orderBy('timestamp', 'desc'), limit(10));
+        
+        if (lastDoc) {
+        q = query(postsRef, orderBy('timestamp', 'desc'), startAfter(lastDoc), limit(10));
+        }
+        
+        const documentSnapshots = await getDocs(q);
+        const postsData: Post[] = documentSnapshots.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+        })) as Post[];
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const postsData : Post[] = [];
-            snapshot.forEach((doc) => {
-                postsData.push({ id: doc.id, ...doc.data() } as Post);
-            });
-            setPosts(postsData);
-        });
+        if (documentSnapshots.docs.length > 0) {
+        setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
+        }
 
-        return () => unsubscribe();
+        if (lastDoc) {
+        setPosts(prevPosts => [...prevPosts, ...postsData]);
+        } else {
+        setPosts(postsData);
+        }
+
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchPosts();
     }, []);
 
-    const renderItem = ({ item } : {item: Post}) => (
+    const handleLoadMore = () => {
+        if (!loading && lastVisible) {
+        fetchPosts(lastVisible);
+        }
+    };
+
+    const handleRefresh = () => {
+        setRefreshing(true);
+        fetchPosts().then(() => setRefreshing(false));
+    };
+
+    const renderItem = ({ item }: { item: Post }) => (
         <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PostDetails', { post: item })}>
-            {item.imageURLs.length > 0 && (
-                    <Image source={{ uri: item.imageURLs[0] }} style={styles.cardImage} />
-            )}
-            <Text style={styles.cardTitle}>{item.title}</Text>
+          {item.imageURLs.length > 0 && (
+            <Image source={{ uri: item.imageURLs[0] }} style={styles.cardImage} />
+          )}
+          <Text style={styles.cardTitle}>{item.title}</Text>
         </TouchableOpacity>
     );
 
@@ -54,22 +85,25 @@ const Home = () => {
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id}
                 numColumns={2}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
             />
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-  container: {
-      flex: 1,
-      backgroundColor: '#f5f6fa',
-  },
-  card: {
+    container: {
+        flex: 1,
+        backgroundColor: '#f5f6fa',
+    },
+    card: {
         flex:1,
         backgroundColor: '#fff',
         borderRadius: 10,
         padding: 20,
-        // marginHorizontal: 20,
         marginVertical: 5,
         shadowColor: '#000',
         shadowOffset: {
@@ -81,25 +115,24 @@ const styles = StyleSheet.create({
         elevation: 5,
         alignItems:'center',
         justifyContent:'center'
-  },
-  cardImage: {
-      width: 180,
-      height: 180,
-    //   marginRight: 10,
-  },
-  cardTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      marginVertical: 10,
-  },
-  cardCaption: {
-      fontSize: 14,
-      color: '#666',
-      marginBottom: 10,
-  },
-  cardSpendingRange: {
-      fontSize: 14,
-      color: '#666',
-  },
+    },
+    cardImage: {
+        width: 180,
+        height: 180,
+        },
+    cardTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginVertical: 10,
+    },
+    cardCaption: {
+        fontSize: 14,
+        color: '#666',
+        marginBottom: 10,
+    },
+    cardSpendingRange: {
+        fontSize: 14,
+        color: '#666',
+    },
 });
 export default Home;
