@@ -8,6 +8,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome } from '@expo/vector-icons';  
 import { HandlerStateChangeEvent, TapGestureHandler, TapGestureHandlerEventPayload} from 'react-native-gesture-handler';  
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
+import { Entypo } from '@expo/vector-icons';
 
   
   type Post = {
@@ -25,7 +26,15 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
     userName: string,
     comment: string,
     likes: number,
-    replies?: Comments[]
+    replies?: Reply[]
+    replyCount: number,
+  }
+
+  type Reply = {
+    id: string,
+    userName: string,
+    comment: string,
+    likes: number,
   }
   
   
@@ -47,13 +56,17 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
     const [userName, setUserName] = useState<string | undefined>();
     const [saved, setSaved] = useState<boolean>(false);
 
-    const [replies, setReplies] = useState<{[key:string]: Comments[]}>({});
+    const [replies, setReplies] = useState<{[ket: string]: Reply[]}>({});
     const [isReplying, setIsReplying] = useState(false);
     const [replyTo, setReplyTo] = useState<string | null>(null);
     const [replyName, setReplyName] = useState<string>('')
+    const [likeCooldown, setLikeCooldown] = useState<boolean>(false);
+
 
     const [commentLikedMap, setCommentLikedMap] = useState<{ [key: string]: boolean }>({});
+    const [replyLikedMap, setReplyLikedMap] = useState<{ [key: string]: boolean }>({});
     const [showRepliesMap, setShowRepliesMap] = useState<{ [key: string]: boolean }>({});
+
 
     const db = getFirestore();
     const auth = getAuth();
@@ -77,8 +90,11 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
             comment: data.comment,
             userName: data.userName,
             likes: data.likes || 0,
+            replies: [],
+            replyCount: data.replyCount || 0,
           });
-    
+
+
           likesPromises.push(
             getDocs(collection(db, `posts/${post.id}/comments/${commentId}/likes`)).then((likesSnapshot) => {
               likesSnapshot.forEach((likeDoc) => {
@@ -144,6 +160,8 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
       unsubscribe();
     },[post.id, user])
 
+    
+
    
 
     const handleLike = useCallback(
@@ -176,7 +194,10 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
 
       const handleReplyLike = useCallback(
         async (commentId: string, replyId: string, isLiked: boolean) => {
-          if (user) {
+          if (user && !likeCooldown) {
+
+            setLikeCooldown(true);
+
             const replyRef = doc(db, `posts/${post.id}/comments/${commentId}/replies/${replyId}`);
             const replyLikesRef = collection(db, `posts/${post.id}/comments/${commentId}/replies/${replyId}/likes`);
             const userReplyLikeRef = doc(replyLikesRef, user.uid);
@@ -184,15 +205,20 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
             if (isLiked) {
               await deleteDoc(userReplyLikeRef);
               await updateDoc(replyRef, { likes: increment(-1) });
-              setCommentLikedMap((prev) => ({ ...prev, [replyId]: false }));
+              setReplyLikedMap((prev) => ({ ...prev, [replyId]: false }));
             } else {
               await setDoc(userReplyLikeRef, {
                 userId: user.uid,
                 timestamp: new Date(),
               });
               await updateDoc(replyRef, { likes: increment(1) });
-              setCommentLikedMap((prev) => ({ ...prev, [replyId]: true }));
+              setReplyLikedMap((prev) => ({ ...prev, [replyId]: true }));
             }
+
+            setTimeout(() => {
+              setLikeCooldown(false);
+            }, 1000);
+
           }
         }, [post.id, user]
       );
@@ -203,16 +229,17 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
         
         if (comment.trim()) {
           if (isReplying && replyTo) {
+            const docRef = doc(db, `posts/${post.id}/comments/${replyTo}`)
             const repliesRef = collection(db, `posts/${post.id}/comments/${replyTo}/replies`);
             await addDoc(repliesRef, {
-              comment: comment.replace(replyName, ''),
+              comment: comment,
               userId: user?.uid,
               userName: userName,
               likes: 0,
               timestamp: new Date(),
             });
 
-            fetchReplies(replyTo);
+            await updateDoc(docRef, { replyCount: increment(1)})
           
           } else {
             const commentsRef = collection(db, `posts/${post.id}/comments`);
@@ -221,8 +248,10 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
               userId: user?.uid,
               userName: userName,
               likes: 0,
+              replyCount: 0,
               timestamp: new Date(),
             });
+            
           }
           setComment('');
           setIsReplying(false);
@@ -234,7 +263,9 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
     
     const handleCommentLike = useCallback(
       async(commentId: string, isLiked:boolean) => {
-        if (user) {
+        if (user && !likeCooldown) {
+          setLikeCooldown(true);
+          
           const commentRef = doc(db, `posts/${post.id}/comments/${commentId}`);
           const commentLikesRef = collection(db, `posts/${post.id}/comments/${commentId}/likes`);
           const userCommentLikeRef = doc(commentLikesRef, user.uid);
@@ -251,6 +282,11 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
             await updateDoc(commentRef, { likes: increment(1) });
             setCommentLikedMap((prev) => ({ ...prev, [commentId]: true }));
           }
+
+          setTimeout(() => {
+            setLikeCooldown(false);
+          }, 1000);
+          
         }
       },[post.id, user]
     )
@@ -338,20 +374,40 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
 
     const fetchReplies = async (commentId: string) => {
       const repliesRef = collection(db, `posts/${post.id}/comments/${commentId}/replies`);
-      const repliesDocs = await getDocs(repliesRef);
 
-      const repliesData : Comments[] = repliesDocs.docs.map((doc) => ({
-        id: doc.id,
-        userName: doc.data().userName,
-        comment: doc.data().comment,
-        likes: doc.data().like || 0,
-      }))
+      onSnapshot(repliesRef, async(snapshot) => {
+        const repliesData: Reply[] = [];
+        const likesPromises: Promise<void>[] = [];
+        
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const replyId = doc.id;
+          repliesData.push({
+            id: replyId,
+            comment: data.comment,
+            userName: data.userName,
+            likes: data.likes || 0,
+          });
 
-      setReplies((prev) => ({
-        ...prev,
-        [commentId]: repliesData
-      }))
+          likesPromises.push(
+            getDocs(collection(db, `posts/${post.id}/comments/${commentId}/replies/${replyId}/likes`)).then((likesSnapshot) => {
+              likesSnapshot.forEach((likeDoc) => {
+                if (likeDoc.id === user?.uid) {
+                  setReplyLikedMap((prev) => ({...prev, [replyId]: true}));
+                }
+              });
+            })
+          );
+        });
+
+        await Promise.all(likesPromises);
+        setReplies((prev) => ({
+          ...prev,
+          [commentId]: repliesData
+        })); 
+      });
     }
+
 
     const handleShowReplies = (commentId: string) => {
       setShowRepliesMap((prev) => ({
@@ -362,6 +418,11 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
       if (!showRepliesMap[commentId]) {
         fetchReplies(commentId);
       }
+    }
+
+    const handleCloseReply = () => {
+      setIsReplying(false);
+      setComment('');
     }
 
     const renderContent = useMemo(
@@ -412,6 +473,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
         const isLiked = commentLikedMap[item.id] || false;
         const showReplies = showRepliesMap[item.id] || false;
 
+
         return (
           
           <View style={styles.commentContainer}>
@@ -421,7 +483,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
                 <Text style={styles.comment}>{item.comment}</Text>
               </View>
               <View style={styles.commentLikeNumberContainer}>
-              <Pressable onPress={() => handleCommentLike(item.id, isLiked)}>
+              <Pressable onPress={() => handleCommentLike(item.id, isLiked)} disabled={likeCooldown}>
                 <MaterialCommunityIcons
                   name={isLiked ? "heart" : "heart-outline"}
                   size={22}
@@ -435,9 +497,11 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
               <Text style={styles.replyButton}>Reply</Text>
             </Pressable>
 
-            <Pressable onPress={() => handleShowReplies(item.id)}>
-              <Text style={styles.showRepliesText}>{showReplies ? 'Hide replies' : 'Show replies'}</Text>
-            </Pressable>
+            {item.replyCount > 0 && (
+              <Pressable onPress={() => handleShowReplies(item.id)}>
+                <Text style={styles.showRepliesText}>{showReplies ? 'Hide replies' : `Show ${item.replyCount} replies`}</Text>
+              </Pressable>)
+            }
 
             {showReplies && replies[item.id] && (
               <FlatList
@@ -447,13 +511,13 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
                   <View style={styles.replyContainer}>
                     <Text style={styles.replyName}>{reply.userName}</Text>
                     <View style={styles.replyCommentContainer}>
-                      <Text style={styles.replyComment}>{`@${reply.userName} ${reply.comment}`}</Text>
+                      <Text style={styles.replyComment}>{reply.comment}</Text>
                       <View style={styles.commentLikeNumberContainer}>
-                        <Pressable onPress={() => handleReplyLike(item.id, reply.id, commentLikedMap[reply.id])}>
+                        <Pressable onPress={() => handleReplyLike(item.id, reply.id, replyLikedMap[reply.id])} disabled={likeCooldown}>
                           <MaterialCommunityIcons
-                            name={commentLikedMap[reply.id] ? "heart" : "heart-outline"}
+                            name={replyLikedMap[reply.id] ? "heart" : "heart-outline"}
                             size={22}
-                            color={commentLikedMap[reply.id] ? "red" : "black"}
+                            color={replyLikedMap[reply.id] ? "red" : "black"}
                           />
                         </Pressable>
                         <Text style={{ paddingLeft: 3, paddingBottom: 3 }}>{reply.likes}</Text>
@@ -477,6 +541,15 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={renderComments}
                   />
+
+                  {isReplying && (
+                        <View style={styles.statusBarContainer}>
+                          <Text style={styles.statusBarReplying}>Replying...</Text>
+                          <Pressable onPress={handleCloseReply} style={styles.statusBarCross}>
+                            <Entypo name="cross" size={24} color="black" />
+                          </Pressable>
+                        </View>
+                      )}
         
                   <View style={styles.footer}>
                     <TextInput
@@ -485,10 +558,10 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
                       placeholder="Add a comment"
                       value={comment}
                       onChangeText={(text) => {
-                        if (isReplying && !text.startsWith(replyName)) {
+                        if (!isReplying) {
                           setIsReplying(false);
-                          setReplyName('');
-                          setReplyTo(null);
+                          // setReplyName('');
+                          // setReplyTo(null);
                         }
 
                         setComment(text);
@@ -600,6 +673,16 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
       width:'107%',
       // borderWidth:1
     },
+    statusBarContainer: {
+      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+      padding: 10,
+      alignItems: 'center',
+      position:'absolute',
+      width: '100%',
+      flexDirection: 'row',
+      bottom: 60,
+      justifyContent:'space-between'
+    },
     swiper: {
       height: 400,
       marginBottom:20,
@@ -702,6 +785,13 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
     replyComment: {
       fontSize:16,
 
+    },
+    statusBarReplying: {
+      color: 'black',
+      fontWeight: 'bold',
+    },
+    statusBarCross: {
+      
     },
     footer: {
       position: 'absolute',
