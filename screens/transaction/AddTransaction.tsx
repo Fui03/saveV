@@ -22,6 +22,8 @@ const AddTransaction = () => {
   const [amount, setAmount] = useState<number | undefined>();
   const [date, setDate] = useState<Date>(new Date());
   const [openDatePicker, setOpenDatePicker] = useState<boolean>(false);
+
+  const MAX_AMOUNT = 1e13;
   
 
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -35,8 +37,12 @@ const AddTransaction = () => {
 
       const db = getFirestore();
 
-      
       try {
+
+        if (!amount) {
+          Alert.alert("Error", "Please enter your amount!");
+          return;
+        }
 
         if (amount) {
           if (amount <= 0 ) {
@@ -48,10 +54,20 @@ const AddTransaction = () => {
             Alert.alert("Error", "Please enter a valid number!")
             return;
           }
+
+          if (amount > MAX_AMOUNT) {
+            Alert.alert("Error", `Amount should not exceed ${MAX_AMOUNT}!`);
+            return;
+          }
         }
         
         if (!name) {
           Alert.alert("Error", "Please enter a name for the expenses!");
+          return;
+        }
+
+        if (name.length > 20) {
+          Alert.alert("Error", "Description shouldnt exceed 20 characters");
           return;
         }
         

@@ -4,8 +4,16 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { format } from 'date-fns';
 import { getAuth } from 'firebase/auth';
-import { collection, getFirestore, onSnapshot, query } from 'firebase/firestore';
+import { collection, doc, getDoc, getFirestore, onSnapshot, query } from 'firebase/firestore';
 import RNPickerSelect from 'react-native-picker-select';
+
+import { PDFDocument, rgb } from 'pdf-lib';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+
+
+import { AntDesign } from '@expo/vector-icons';
+
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -24,6 +32,13 @@ const TransactionScreen = () => {
   const [isPickerVisible, setPickerVisible] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<number>(date.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(date.getFullYear());
+  const [userName, setUserName] = useState<string | undefined>();
+  const [userEmail, setUserEmail] = useState<string | undefined>();
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const db = getFirestore();
+
 
   const handleAddTransaction = () => {
     navigation.navigate('AddTransaction');
@@ -48,11 +63,21 @@ const TransactionScreen = () => {
     }, {});
 
   useEffect(() => {
-    const auth = getAuth();
-    const user = auth.currentUser;
 
     if (user) {
-      const db = getFirestore();
+
+      const fetchUserData = async () => {
+        const profRef = doc(db, `users/${user.uid}`);
+        const snapshot = await getDoc(profRef);
+        if (snapshot.exists()) {
+          setUserName(snapshot.data().userName);
+        } 
+  
+        if (user.email) {
+          setUserEmail(user.email);
+        }
+      }
+
       const year = date.getFullYear().toString();
       const month = (date.getMonth() + 1).toString().padStart(2, "0");
       const userRef = collection(db, `users/${user.uid}/Years/${year}/Months/${month}/Transactions`);
@@ -68,6 +93,8 @@ const TransactionScreen = () => {
         setTransactions(transactionList);
         setTotalExpenses(transactionList.reduce((acc: number, trans: { date: string | number | Date, id: string, name: string, amount: number }) => acc + trans.amount, 0));
       });
+
+      fetchUserData();
 
       return () => unsubscribe();
     }
@@ -99,6 +126,96 @@ const TransactionScreen = () => {
     { label: 'September', value: 9 }, { label: 'October', value: 10 },
     { label: 'November', value: 11 }, { label: 'December', value: 12 }
   ];
+
+  const generatePdf = async (transactions: Transaction[]) => {
+
+    const pdfDoc = await PDFDocument.create();
+    let page = pdfDoc.addPage([300, 410]);
+
+    const margin = 10;
+
+    let yPosition = 390;
+
+    const drawHeader = () => {
+      page.drawText('saveV', { x: 10, y: yPosition, size: 20, color: rgb(0, 0, 0) });
+      yPosition -= 15;
+      page.drawText('123 ABCDEFG, Singapore 123456', { x: 10, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+      yPosition -= 15;
+      page.drawText('moneyMiracleSaveV@domain.com', { x: 10, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+      yPosition -= 15;
+      page.drawText(`User Name: ${userName}`, { x: 10, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+      yPosition -= 15;
+      page.drawText(`User Email: ${userEmail}`, { x: 10, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+      yPosition -= 15;
+      page.drawText(`Statement Date: ${format(new Date(), 'dd-MM-yyyy')}`, { x: 10, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+      yPosition -= 30;
+    };
+
+    const drawTableHeaders = () => {
+      page.drawText('Transactions', { x: 10, y: yPosition, size: 14, color: rgb(0, 0, 0) });
+      yPosition -= 20;
+
+      page.drawText('Date', {x: 10, y: yPosition, size: 12, color: rgb(0,0,0)})
+      page.drawText('Description', {x: 90, y: yPosition, size: 12, color: rgb(0,0,0)})
+      page.drawText('Amount', {x: 230, y: yPosition, size: 12, color: rgb(0,0,0)})
+      yPosition -= 20;
+    };
+
+    const drawTableRow = (transaction: Transaction, rowIndex: number) => {
+      const isEvenRow = rowIndex % 2 === 0;
+      const rowColor = isEvenRow ? rgb(0.95, 0.95, 0.95) : rgb(1, 1, 1);
+
+      page.drawRectangle({
+        x: 10,
+        y: yPosition - 6,
+        width: 300,
+        height: 20,
+        color: rowColor,
+      });
+
+      page.drawText(`${format(transaction.date, 'dd-MM-yyyy')}`, { x: 10, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+      page.drawText(transaction.name, { x: 90, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+      page.drawText(`$${transaction.amount.toString()}`, { x: 230, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+      yPosition -= 20;
+    };
+
+    drawHeader();
+    drawTableHeaders();
+
+    transactions.forEach((transaction, rowIndex) => {
+      if (yPosition < margin) {
+        page = pdfDoc.addPage([300, 410]);
+        yPosition = 390;
+        drawTableHeaders();
+      }
+      drawTableRow(transaction, rowIndex);
+    });
+
+    const pdfBytes = await pdfDoc.save();
+
+    const pdfPath = `${FileSystem.documentDirectory}transactions.pdf`;
+    
+    await FileSystem.writeAsStringAsync(pdfPath,  btoa(String.fromCharCode(...pdfBytes)), {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    return pdfPath;
+  };
+
+  const handleExportPdf = async () => {
+    try {
+        const pdfPath = await generatePdf(transactions);
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(pdfPath);
+        } else {
+          alert('Sharing is not available on this device');
+        }
+      
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -146,6 +263,10 @@ const TransactionScreen = () => {
           <Text style={styles.totalExpensesText}>Monthly Expenses:</Text>
           <Text style={styles.totalExpensesNumber}>${totalExpenses}</Text>
         </View>
+        <TouchableOpacity onPress={handleExportPdf}>
+          <AntDesign name="export" size={24} color="black" />
+        </TouchableOpacity>
+
       </View>
       <FlatList
         data={Object.keys(groupedTransactions)}
