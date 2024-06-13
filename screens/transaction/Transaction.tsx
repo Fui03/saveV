@@ -191,6 +191,15 @@ const TransactionScreen = () => {
       drawTableRow(transaction, rowIndex);
     });
 
+    if (yPosition < margin) {
+      page = pdfDoc.addPage([300, 410]);
+      yPosition = 390;
+      drawTableHeaders();
+    }
+
+    page.drawText("Total Expenses:", { x: 10, y: yPosition, size: 11, color: rgb(0, 0, 0) });
+    page.drawText(`$${totalExpenses}`, { x: 230, y: yPosition, size: 11, color: rgb(0, 0, 0) });
+
     const pdfBytes = await pdfDoc.save();
 
     const pdfPath = `${FileSystem.documentDirectory}transactions.pdf`;
