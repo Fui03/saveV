@@ -8,9 +8,11 @@ import { doc, getFirestore, onSnapshot, setDoc } from 'firebase/firestore';
 
 
 
+
 const Profile = () => {
 
   const [role, setRole] = useState<String>();
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   useEffect(() => {
     const auth = getAuth();
@@ -64,6 +66,7 @@ const Profile = () => {
         <Button title="Upgrade to Business Account!" onPress={handleUpgrade}/>  
         : <Text></Text>
       }
+      <Button title='Payment' onPress={()=> navigation.navigate(`PaymentScreen`)}/>
     </SafeAreaView>
   );
 };

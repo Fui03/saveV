@@ -6,7 +6,7 @@ import { addDoc, collection, doc, getFirestore, onSnapshot, updateDoc, getDocs, 
 import Swiper from 'react-native-swiper';
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome } from '@expo/vector-icons';  
-import { HandlerStateChangeEvent, TapGestureHandler, TapGestureHandlerEventPayload} from 'react-native-gesture-handler';  
+import { HandlerStateChangeEvent, TapGestureHandler} from 'react-native-gesture-handler';  
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { Entypo } from '@expo/vector-icons';
 
