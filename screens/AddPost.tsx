@@ -5,6 +5,7 @@ import { getAuth } from 'firebase/auth';
 import { addDoc, collection, getFirestore, serverTimestamp } from 'firebase/firestore';
 import Swiper from 'react-native-swiper';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type AddPostRouteParams = {
     images: string[];
@@ -18,7 +19,7 @@ export default function AddPost() {
     const [title, setTitle] = useState<string>('');
     const [caption, setCaption] = useState<string>('');
     const [spendingRange, setSpendingRange] = useState<number | undefined>();
-    const navigation = useNavigation();
+    const navigation = useNavigation<NativeStackNavigationProp<any>>();
  
     const route = useRoute<AddPostRouteProp>();
 
@@ -28,59 +29,18 @@ export default function AddPost() {
         }
     }, [route.params?.images]);
 
-    const uploadImages = async () => {
-        try {
-            const storage = getStorage();
-            const uploadPromises = images.map(async (uri, index) => {
-                const response = await fetch(uri);
-                const blob = await response.blob();
-                const postRef = ref(storage, `postImages/${Date.now()}_${index}`);
 
-                await uploadBytes(postRef, blob);
-                const downloadURL = await getDownloadURL(postRef);
-                return downloadURL;
-            });
-
-            const downloadURLs = await Promise.all(uploadPromises);
-            return downloadURLs;
-        } catch (e) {
-            Alert.alert("Error", "Try Again");
-        }
-    };
-
-    const savePost = async () => {
-        const auth = getAuth();
-        const user = auth.currentUser;
-
-        if (user && images.length > 0) {
-            const db = getFirestore();
-            const postRef = collection(db, "posts");
-            try {
-                const imageURLs = await uploadImages();
-
-                await addDoc(postRef, {
-                    userId: user.uid,
-                    title: title,
-                    caption: caption,
-                    spendingRange: spendingRange,
-                    imageURLs: imageURLs,
-                    timestamp: serverTimestamp(),
-                    likes: 0,
-                    comments: [],
-                });
-
-                Alert.alert("Done");
-                setImages([]);
-                setCaption('');
-                setSpendingRange(0);
-                navigation.goBack(); 
-            } catch (e) {
-                Alert.alert("Error", "Try Again");
-            }
+    const navigateToPayment = () => {
+        if (images && title && caption && spendingRange) {
+            navigation.navigate('PaymentScreen', {
+                images: images,
+                title: title,
+                caption: caption,
+                spendingRange: spendingRange});
         } else {
-            Alert.alert("Error", "Please select images and enter a caption");
+            Alert.alert("Fill in all the details needed!");
         }
-    };
+    }
 
     return (
         <SafeAreaView style={styles.overall}>
@@ -119,7 +79,7 @@ export default function AddPost() {
                     value={(spendingRange === undefined || Number.isNaN(spendingRange))  ? '' : spendingRange.toString(10)}
                     onChangeText={(text) => setSpendingRange(parseFloat(text))}
                 />  
-                <Button title="Save Post" onPress={savePost} />
+                <Button title="Save Post" onPress={navigateToPayment} />
 
             </View>
 

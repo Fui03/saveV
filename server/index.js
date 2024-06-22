@@ -17,11 +17,11 @@ app.post('/create-payment-intent', async (req, res) => {
       currency: 'sgd',
       payment_method_types: ['card'],
     });
-    res.send({
+    res.json({
       clientSecret: paymentIntent.client_secret,
     });
   } catch (e) {
-    res.status(400).send({
+    res.status(400).json({
       error: {
         message: e.message,
       },
@@ -29,6 +29,8 @@ app.post('/create-payment-intent', async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
-});
+module.exports = app;
+
+// app.listen(3000, () => {
+//   console.log('Server running on port 3000');
+// });

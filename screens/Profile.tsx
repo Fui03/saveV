@@ -66,7 +66,6 @@ const Profile = () => {
         <Button title="Upgrade to Business Account!" onPress={handleUpgrade}/>  
         : <Text></Text>
       }
-      <Button title='Payment' onPress={()=> navigation.navigate(`PaymentScreen`)}/>
     </SafeAreaView>
   );
 };
