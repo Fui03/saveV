@@ -15,6 +15,8 @@ import Transaction from "@/screens/transaction/Transaction";
 import TransactionDetail from "@/screens/transaction/TransactionDetail";
 import AddPost from "@/screens/AddPost";
 import PostDetails from "@/screens/PostDetails";
+import PaymentScreen from "@/screens/PaymentScreen";
+import PdfReceipt from "@/screens/PdfReceipt";
 
 export default function authStack() {
     const Stack = createNativeStackNavigator();
@@ -63,6 +65,14 @@ export default function authStack() {
                         name="PostDetails" 
                         component={PostDetails}
                         options={{headerShown: true, title: "New Post", headerBackTitle:"Home"}}/>
+                    <Stack.Screen 
+                        name="PaymentScreen" 
+                        component={PaymentScreen}
+                        options={{headerShown: true, title: "Payment", headerBackTitle:"Home"}}/>
+                    <Stack.Screen 
+                        name="PdfReceipt" 
+                        component={PdfReceipt}
+                        options={{headerShown: false, title: "Payment", headerBackTitle:"Home"}}/>
                 </Stack.Navigator>
             </NavigationContainer>
     );

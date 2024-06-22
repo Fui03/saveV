@@ -6,7 +6,7 @@ import { addDoc, collection, doc, getFirestore, onSnapshot, updateDoc, getDocs, 
 import Swiper from 'react-native-swiper';
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome } from '@expo/vector-icons';  
-import { HandlerStateChangeEvent, TapGestureHandler, TapGestureHandlerEventPayload} from 'react-native-gesture-handler';  
+import { HandlerStateChangeEvent, TapGestureHandler} from 'react-native-gesture-handler';  
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { Entypo } from '@expo/vector-icons';
 
@@ -49,7 +49,7 @@ import { Entypo } from '@expo/vector-icons';
     const route = useRoute<PostDetailsRouteProp>();
     const { post } = route.params;
 
-    const [likes, setLikes] = useState<number>(post.likes || 0);
+    const [likes, setLikes] = useState<number>(0);
     const [liked, setLiked] = useState<boolean>(false);
     const [comment, setComment] = useState<string>('');
     const [comments, setComments] = useState<Comments[]>([]);
@@ -121,6 +121,14 @@ import { Entypo } from '@expo/vector-icons';
         
         const likesRef = collection(db, `posts/${post.id}/likes`);
         const q = query(likesRef, where('userId', '==', user.uid));
+
+        const likeRef = doc(db, `posts/${post.id}`);
+        
+        getDoc(likeRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            setLikes(snapshot.data().likes);
+          }
+        })
         
         getDocs(q).then((snapshot) => {
           if (!snapshot.empty) {
