@@ -17,6 +17,7 @@ import AddPost from "@/screens/AddPost";
 import PostDetails from "@/screens/PostDetails";
 import PaymentScreen from "@/screens/PaymentScreen";
 import PdfReceipt from "@/screens/PdfReceipt";
+import Search from "@/screens/Search";
 
 export default function authStack() {
     const Stack = createNativeStackNavigator();
@@ -73,6 +74,10 @@ export default function authStack() {
                         name="PdfReceipt" 
                         component={PdfReceipt}
                         options={{headerShown: false, title: "Payment", headerBackTitle:"Home"}}/>
+                    <Stack.Screen 
+                        name="Search" 
+                        component={Search}
+                        options={{headerShown: true, title: "Home", headerBackTitle: "Home"}}/>
                 </Stack.Navigator>
             </NavigationContainer>
     );
