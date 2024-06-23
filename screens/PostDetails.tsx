@@ -12,13 +12,13 @@ import { Entypo } from '@expo/vector-icons';
 
   
   type Post = {
-        id: string;
-        title: string;
-        caption: string;
-        spendingRange: number;
-        imageURLs: string[];
-        timestamp: any; 
-        likes: number;
+    id: string;
+    title: string;
+    caption: string;
+    spendingRange: number;
+    imageURLs: string[];
+    timestamp: any; 
+    likes: number;
   };
 
   type Comments = {

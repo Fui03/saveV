@@ -2,14 +2,22 @@
     "version": 2,
     "builds": [
       {
-        "src": "server/index.js",
+        "src": "server/api/*.js",
         "use": "@vercel/node"
       }
     ],
     "routes": [
       {
-        "src": "/create-payment-intent",
-        "dest": "/server/index.js"
+        "src": "/api/payment/create-payment-intent",
+        "dest": "/server/api/payment.js"
+      },
+      {
+        "src": "/api/sync",
+        "dest": "/server/api/sync.js"
+      },
+      {
+        "src": "/api/search",
+        "dest": "/server/api/search.js"
       }
     ]
 }

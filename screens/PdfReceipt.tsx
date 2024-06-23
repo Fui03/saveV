@@ -14,7 +14,7 @@ import { Fontisto } from '@expo/vector-icons';
 
   
 type PdfReceiptRouteParams = {
-    pdfUri: string;
+  pdfUri: string;
 };
 
 type PdfReceiptRouteProp = RouteProp<{ PdfReceipt: PdfReceiptRouteParams }, 'PdfReceipt'>;

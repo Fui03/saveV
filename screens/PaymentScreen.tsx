@@ -82,7 +82,7 @@ export default function PaymentScreen() {
         setLoading(true);
         try {
           //http://10.0.2.2:3000/create-payment-intent
-          const response = await fetch('https://save-qvcbyvvi3-savevs-projects.vercel.app/create-payment-intent', {
+          const response = await fetch('https://save-elbrpbsd6-savevs-projects.vercel.app/api/payment/create-payment-intent', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -97,9 +97,6 @@ export default function PaymentScreen() {
           }
 
           const { clientSecret } = await response.json();
-
-          console.log(clientSecret);
-
       
           const { error, paymentIntent } = await confirmPayment(clientSecret, {
             paymentMethodType: 'Card',
@@ -230,7 +227,7 @@ export default function PaymentScreen() {
         try {
           const imageURLs = await uploadImages();
 
-          await addDoc(postRef, {
+          const postDoc = await addDoc(postRef, {
             userId: user.uid,
             title: title,
             caption: caption,
@@ -239,6 +236,26 @@ export default function PaymentScreen() {
             timestamp: serverTimestamp(),
             likes: 0,
             comments: [],
+          });
+
+          const postId = postDoc.id;
+          const post = {
+            userId: user.uid,
+            title: title,
+            caption: caption,
+            spendingRange: spendingRange,
+            imageURLs: imageURLs,
+            timestamp: serverTimestamp(),
+            likes: 0,
+            comments: [],
+          };
+
+          await fetch('https://save-elbrpbsd6-savevs-projects.vercel.app/api/sync', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ postId, post }),
           });
 
           Alert.alert("Done"); 

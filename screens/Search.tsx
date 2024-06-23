@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { SafeAreaView, Text, StyleSheet , Button, Image, View, FlatList, TouchableOpacity, TextInput, Alert} from 'react-native';
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useNavigation} from "@react-navigation/native";
-import { collection, getDocs, getFirestore, limit, onSnapshot, orderBy, query, startAfter } from 'firebase/firestore';
+import { RouteProp, useNavigation, useRoute} from "@react-navigation/native";
+import { collection, doc, getDoc, getDocs, getFirestore, limit, onSnapshot, orderBy, query, startAfter } from 'firebase/firestore';
 
 
 type Post = {
@@ -15,84 +15,72 @@ type Post = {
   likes: number;
 };
 
+type PostIdsRouteParams = {
+    postIds: string[],
+}
 
-const Home = () => {
+type PostIdsRouteProp = RouteProp<{ Search: PostIdsRouteParams }, 'Search'>;
+
+const chunkArray = (array: any[], size: number) => {
+    const chunkedArr = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunkedArr.push(array.slice(i, i + size));
+    }
+    return chunkedArr;
+  };
+
+const Search = () => {
+
+    const route = useRoute<PostIdsRouteProp>();
+    const { postIds } = route.params;
+
 
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
     const [posts, setPosts] = useState<Post[]>([]);
-    const [lastVisible, setLastVisible] = useState<any>(null);
+    const [lastChunkIndex, setLastChunkIndex] = useState(0);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
-    const [search, setSearch] = useState<string>('');
-    
-    const fetchPosts = async (lastDoc?: any) => {
+    const chunks = chunkArray(postIds, 5);
+
+    const fetchPosts = async (chunkIndex: number) => {
+        if (chunkIndex >= chunks.length) return;
         setLoading(true);
         const db = getFirestore();
-        const postsRef = collection(db, 'posts');
-        let q = query(postsRef, orderBy('timestamp', 'desc'), limit(10));
-        
-        if (lastDoc) {
-        q = query(postsRef, orderBy('timestamp', 'desc'), startAfter(lastDoc), limit(10));
-        }
-        
-        const documentSnapshots = await getDocs(q);
-        const postsData: Post[] = documentSnapshots.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+        const currentChunk = chunks[chunkIndex];    
+    
+        const fetchedPosts: Post[] = await Promise.all(currentChunk.map(async (postId) => {
+            const postDoc = await getDoc(doc(db, 'posts', postId));
+            if (postDoc.exists()) {
+                return { id: postId, ...postDoc.data() };
+            } else {
+                return null;
+            }
         })) as Post[];
-
-        if (documentSnapshots.docs.length > 0) {
-            setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
-        }
-
-        if (lastDoc) {
-            setPosts(prevPosts => [...prevPosts, ...postsData]);
-        } else {
-            setPosts(postsData);
-        }
-
+    
+        setPosts(prevPosts => [...prevPosts, ...fetchedPosts.filter(post => post !== null)]);
         setLoading(false);
+        setLastChunkIndex(chunkIndex);
     };
 
     useEffect(() => {
-        fetchPosts();
+        fetchPosts(0);
     }, []);
 
     const handleLoadMore = () => {
-        if (!loading && lastVisible) {
-        fetchPosts(lastVisible);
+        if (!loading && lastChunkIndex < chunks.length - 1) {
+            fetchPosts(lastChunkIndex + 1);
         }
     };
 
     const handleRefresh = () => {
         setRefreshing(true);
-        fetchPosts().then(() => setRefreshing(false));
+        setPosts([]);
+        setLastChunkIndex(0);
+        fetchPosts(0).then(() => setRefreshing(false));
     };
 
-    const handleSearch = async () => {
-        try {
-            const response = await fetch('https://save-elbrpbsd6-savevs-projects.vercel.app/api/search', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  query: search,
-                }),
-            })
-
-            const postIds = await response.json();
-            setSearch('')
-            navigation.navigate('Search', {postIds});
-        } catch (e) {
-            console.error('Error searching posts:', e);
-            Alert.alert("Error", "An error occurred while searching for posts. Please try again.");
-          }
-    }
-    
-    
 
     const renderItem = ({ item }: { item: Post }) => (
         <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PostDetails', { post: item })}>
@@ -105,12 +93,7 @@ const Home = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <TextInput
-                placeholder='Search ......'
-                value={search}
-                onChangeText={setSearch}
-                style={styles.searchBar}
-                onSubmitEditing={handleSearch}/>
+
             <FlatList
                 data={posts}
                 renderItem={renderItem}
@@ -166,12 +149,7 @@ const styles = StyleSheet.create({
         color: '#666',
     },
     searchBar: {
-        borderWidth:1,
-        borderRadius:10,
-        marginVertical:10,
-        height:40,
-        marginHorizontal:10,
-        paddingHorizontal:10
+
     }
 });
-export default Home;
+export default Search;
