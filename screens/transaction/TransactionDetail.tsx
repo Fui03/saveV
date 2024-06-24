@@ -20,19 +20,6 @@ const TransactionDetail = () => {
         };
       };
 
-//   type Transaction = {
-//     date: string | number | Date;
-//     id: string;
-//     name: string;
-//     amount: number;
-//   };
-
-  const [name, setName] = useState('');
-  const [amount, setAmount] = useState<number | undefined>();
-  const [date, setDate] = useState<Date>(new Date());
-  const [openDatePicker, setOpenDatePicker] = useState<boolean>(false);
-  
-
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const route = useRoute();
   const { transaction } = route.params as TransactionDetailRouteParams;

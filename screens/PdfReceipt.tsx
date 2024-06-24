@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { View, Button, Text, Alert, StyleSheet, SafeAreaView, TouchableOpacity, Pressable } from 'react-native';
-import { CardField, useStripe } from '@stripe/stripe-react-native';
 import { PDFDocument, rgb } from 'pdf-lib';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -9,7 +8,6 @@ import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
-import Pdf from 'react-native-pdf';
 import { Fontisto } from '@expo/vector-icons';
 
   
@@ -22,16 +20,122 @@ type PdfReceiptRouteProp = RouteProp<{ PdfReceipt: PdfReceiptRouteParams }, 'Pdf
 
 export default function PdfReceipt() {
 
+  const auth = getAuth();
+  const user = auth.currentUser;
+  const db = getFirestore();
+
     
-    const route = useRoute<PdfReceiptRouteProp>();
-    const { pdfUri } = route.params;
-    const navigation = useNavigation<NativeStackNavigationProp<any>>();
+  const route = useRoute<PdfReceiptRouteProp>();
+  const { pdfUri } = route.params;
+  
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+
+  const [userName, setUserName] = useState<string | undefined>();
+  const [userEmail, setUserEmail] = useState<string | undefined>();
+
+  useEffect(() => {
+
+    if (user) {
+    
+    const fetchUserData = async () => {
+      const profRef = doc(db, `users/${user.uid}`);
+      const snapshot = await getDoc(profRef);
+      if (snapshot.exists()) {
+        setUserName(snapshot.data().userName);
+      } 
+      
+      if (user.email) {
+        setUserEmail(user.email);
+      }
+
+    }
+
+    fetchUserData();
+
+    }
+  }, []);
+
+
+    const generatePdf = async (paymentIntent: string) => {
+
+      const pdfDoc = await PDFDocument.create();
+      let page = pdfDoc.addPage([320, 410]);
+
+      let yPosition = 370;
+
+      const drawHeader = () => {
+        page.drawText('saveV', { x: 250, y: yPosition, size: 20, color: rgb(0.128, 0.128, 0.128) });
+        page.drawText('Invoice', { x: 20, y: yPosition, size: 20, color: rgb(0, 0, 0) });
+        yPosition -= 30;
+        page.drawText(`Invoice Number: ${paymentIntent}`, { x: 20, y: yPosition, size: 11, color: rgb(0.128, 0.128, 0.128) });
+        yPosition -= 15;
+        page.drawText(`Date of Issue: ${format(new Date(), 'dd-MM-yyyy')}`, { x: 20, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+        yPosition -= 15;
+        page.drawText(`Time: ${format(new Date(), 'HH:mm:ss')}`, { x: 20, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+        yPosition -= 30;
+        page.drawText(`SaveV`, { x: 20, y: yPosition, size: 11, color: rgb(0, 0, 0) });
+        page.drawText(`Pay To:`, { x: 140, y: yPosition, size: 11, color: rgb(0, 0, 0) });
+        yPosition -= 15;
+        page.drawText(`${userName}`, { x: 140, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+        yPosition -= 15;
+        page.drawText(`${userEmail}`, { x: 140, y: yPosition, size: 10, color: rgb(0, 0, 0) });
+        yPosition -= 20;
+        page.drawRectangle({x:10, y: yPosition, width:300, height:1, color: rgb(0.128, 0.128, 0.128)})
+        yPosition -= 20;
+
+        
+      };
+      
+      const drawTableHeaders = () => {
+        page.drawText('Description', {x: 10, y: yPosition, size: 11, color: rgb(0,0,0)})
+        page.drawText('Quantity', {x: 170, y: yPosition, size: 11, color: rgb(0,0,0)})
+        page.drawText('Amount', {x: 260, y: yPosition, size: 11, color: rgb(0,0,0)})
+        yPosition -= 10;
+        page.drawRectangle({x:10, y: yPosition, width:300, height:1, color: rgb(0, 0, 0)})
+        yPosition -= 20;
+        
+      };
+
+      const drawTableContent = () => {
+        page.drawText('Posting charge', {x: 10, y: yPosition, size: 9, color: rgb(0,0,0)})
+        page.drawText('x1', {x: 190, y: yPosition, size: 9, color: rgb(0,0,0)})
+        page.drawText('$1.09', {x: 270, y: yPosition, size: 9, color: rgb(0,0,0)})
+        yPosition -= 20;
+        page.drawRectangle({x:10, y: yPosition, width:300, height:1, color: rgb(0, 0, 0)})
+        yPosition -= 15;
+        page.drawText('Total', {x: 10, y: yPosition, size: 9, color: rgb(0,0,0)})
+        page.drawText('$1.09', {x: 270, y: yPosition, size: 9, color: rgb(0,0,0)})
+        yPosition -= 10;
+        page.drawRectangle({x:250, y: yPosition, width:60, height:1, color: rgb(0, 0, 0)})
+        yPosition -= 3;
+        page.drawRectangle({x:250, y: yPosition, width:60, height:1, color: rgb(0, 0, 0)})
+        
+
+      }
+    
+      
+
+      drawHeader();
+      drawTableHeaders();
+      drawTableContent();
+
+      const pdfBytes = await pdfDoc.save();
+
+      const pdfPath = `${FileSystem.documentDirectory}receipt.pdf`;
+
+      await FileSystem.writeAsStringAsync(pdfPath,  btoa(String.fromCharCode(...pdfBytes)), {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+    
+      return pdfPath;
+  };
 
 
     const handleExportPdf = async () => {
         try {
             if (await Sharing.isAvailableAsync()) {
-              await Sharing.shareAsync(pdfUri);
+              const pdf = await generatePdf(pdfUri)
+              await Sharing.shareAsync(pdf);
             } else {
               alert('Sharing is not available on this device');
             }

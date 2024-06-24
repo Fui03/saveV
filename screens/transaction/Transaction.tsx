@@ -261,7 +261,7 @@ const TransactionScreen = () => {
         </View>
       </Modal>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleOpenPicker} style={styles.date}>
+        <TouchableOpacity onPress={handleOpenPicker} style={styles.date} testID='open-picker'>
           <View style={styles.imageContainer}>
             <Text style={styles.month}>{format(date, "MM")}</Text>
             <Image source={require('@/assets/images/chevron_10009171.png')} style={styles.logo} />
@@ -272,7 +272,7 @@ const TransactionScreen = () => {
           <Text style={styles.totalExpensesText}>Monthly Expenses:</Text>
           <Text style={styles.totalExpensesNumber}>${totalExpenses}</Text>
         </View>
-        <TouchableOpacity onPress={handleExportPdf}>
+        <TouchableOpacity onPress={handleExportPdf} testID='export-button'>
           <AntDesign name="export" size={24} color="black" />
         </TouchableOpacity>
 
