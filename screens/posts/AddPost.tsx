@@ -49,7 +49,7 @@ export default function AddPost() {
                     <Swiper style={styles.swiper} showsPagination={true}>
                         {images.map((imageUri, index) => (
                             <View key={index} style={styles.slide}>
-                                <Image source={{ uri: imageUri }} style={styles.image} />
+                                <Image source={{ uri: imageUri }} style={styles.image} testID={`image-${index}`}/>
                             </View>
                         ))}
                     </Swiper>

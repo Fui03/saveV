@@ -62,11 +62,15 @@ export default function ResetEmail() {
         }
 
         if (user && newEmail) {
-            
-            await verifyBeforeUpdateEmail(user, newEmail).then(() => {
-                signOut(auth).then(() => navigation.replace('Login'));
+            try {
+                await verifyBeforeUpdateEmail(user, newEmail)
+                setModalVisibility(false);
+                await signOut(auth)
                 Alert.alert("Reminder", "Verification Email sent! \nPlease verify your new email! \n Your email will be change right after you verified your email!");
-            }).catch((e) => {
+                navigation.replace('Login');
+
+            } catch(e) {
+                console.error(e)
                 let err = "Try Again";
                 if (e instanceof Error && e.message ) {
                   switch (e.message) {
@@ -82,7 +86,7 @@ export default function ResetEmail() {
                   }
                 }
                 Alert.alert("Error", err);
-            })
+            }
         }
         
     }
@@ -114,7 +118,7 @@ export default function ResetEmail() {
                                     inputMode="email"
                                     autoCapitalize="none"
                                 />
-                                <Button title = "Reset Email" onPress={handleResetEmail}/>
+                                <Button title = "Reset Email" onPress={handleResetEmail} testID="Reset Email"/>
                             </View>
                         </View>
                     </View>

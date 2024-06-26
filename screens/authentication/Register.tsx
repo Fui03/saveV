@@ -283,6 +283,7 @@ export default function Register() {
             <Text
               style={styles.navigateRegister}
               onPress={() => navigation.navigate("Login")}
+              testID="Login"
             >
               Login Now!
             </Text>

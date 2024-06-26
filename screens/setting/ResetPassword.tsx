@@ -58,9 +58,9 @@ export default function ResetPassword() {
                 return;
             }
             
-            await updatePassword(user, newPassword).then(() => {
-                navigation.replace('DrawerNavigation');
-            });
+            await updatePassword(user, newPassword)
+            
+            navigation.replace('DrawerNavigation');
             
         } catch (e) {
             let err = "Try Again";
@@ -158,7 +158,7 @@ export default function ResetPassword() {
                                 <Text style={styles.showPasswordText}>{showNewConfirmPassword ? "Hide" : "Show"}</Text>
                             </TouchableOpacity>
                         </View>
-                    <Button title = "Reset Password" onPress={handleResetPassword}/>
+                    <Button title = "Reset Password" onPress={handleResetPassword} testID="ResetPassword"/>
                     </View>
                 </View>
             </SafeAreaView>

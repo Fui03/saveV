@@ -25,15 +25,16 @@ export default function ForgetPassword() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
     
-    const handleForgetPassword = () => {
+    const handleForgetPassword = async () => {
         const auth = getAuth();
         if (email) {
-            sendPasswordResetEmail(auth, email).then(() => {
+            try {
+                await sendPasswordResetEmail(auth, email)
                 Alert.alert("Password Reset Email Sent", "Please check your email!");
                 navigation.navigate("Login");
-            }).catch((e) => {
-
-            });
+            } catch (e) {
+                Alert.alert("Error", "Please Try Again!");
+            }
         }
       }
   

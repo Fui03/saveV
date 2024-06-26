@@ -2,22 +2,19 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Register from "@/screens/authentication/Register";
-import Home from "@/screens/Home";
 import Login from "@/screens/authentication/Login";
-import TabNavigation from "@/routes/TabNavigation";
 import LoginPhoneNumber from "@/screens/authentication/LoginPhoneNumber";
 import ForgetPassword from "@/screens/authentication/ForgetPassword";
 import DrawerNavigation from "@/routes/DrawerNavigation";
 import IncomeStatistic from "@/screens/statistic/IncomeStatistic";
 import LoanStatistic from "@/screens/statistic/LoanStatistic";
 import AddTransaction from "@/screens/transaction/AddTransaction";
-import Transaction from "@/screens/transaction/Transaction";
 import TransactionDetail from "@/screens/transaction/TransactionDetail";
-import AddPost from "@/screens/AddPost";
-import PostDetails from "@/screens/PostDetails";
-import PaymentScreen from "@/screens/PaymentScreen";
-import PdfReceipt from "@/screens/PdfReceipt";
-import Search from "@/screens/Search";
+import AddPost from "@/screens/posts/AddPost";
+import PostDetails from "@/screens/posts/PostDetails";
+import PaymentScreen from "@/screens/posts/PaymentScreen";
+import PdfReceipt from "@/screens/posts/PdfReceipt";
+import Search from "@/screens/posts/Search";
 
 export default function authStack() {
     const Stack = createNativeStackNavigator();

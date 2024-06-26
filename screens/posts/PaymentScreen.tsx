@@ -33,10 +33,6 @@ type NextScreenRouteProp = RouteProp<{ NextScreen: PaymentScreenRouteParams }, '
 
 
 export default function PaymentScreen() {
-  
-  const auth = getAuth();
-  const user = auth.currentUser;
-  const db = getFirestore();
 
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
   const route = useRoute<NextScreenRouteProp>();
@@ -47,32 +43,7 @@ export default function PaymentScreen() {
   const { confirmPayment } = useStripe();
   const [cardDetails, setCardDetails] = useState<CardDetails | null>(null);
   const [loading, setLoading] = useState(false);
-  const [userName, setUserName] = useState<string | undefined>();
-  const [userEmail, setUserEmail] = useState<string | undefined>();
 
-
-  useEffect(() => {
-
-    if (user) {
-    
-    const fetchUserData = async () => {
-      const profRef = doc(db, `users/${user.uid}`);
-      const snapshot = await getDoc(profRef);
-      if (snapshot.exists()) {
-        setUserName(snapshot.data().userName);
-      } 
-      
-      if (user.email) {
-        setUserEmail(user.email);
-      }
-
-    }
-
-    fetchUserData();
-
-    }
-  }, []);
-  
   
   const handlePayPress = async () => {
         if (!cardDetails?.complete) {
@@ -81,7 +52,6 @@ export default function PaymentScreen() {
         }
         setLoading(true);
         try {
-          //http://10.0.2.2:3000/create-payment-intent
           const response = await fetch('https://save-elbrpbsd6-savevs-projects.vercel.app/api/payment/create-payment-intent', {
             method: 'POST',
             headers: {
@@ -111,91 +81,18 @@ export default function PaymentScreen() {
             Alert.alert('Payment Confirmation Error', error.message);
           } else if (paymentIntent) {
             await savePost();
-            const pdfPath = await generatePdf(paymentIntent.id);
-            navigation.replace('PdfReceipt', { pdfUri: pdfPath })
+            setLoading(false);
+            navigation.replace('PdfReceipt', { pdfUri: paymentIntent.id })
           }
         } catch (e) {
             if (e instanceof Error) {
                 console.error(e);
                 Alert.alert('Payment Confirmation Error', e.message);
             }
+            setLoading(false);
         }
-        setLoading(false);
   };
 
-  const generatePdf = async (paymentIntent: string) => {
-
-      const pdfDoc = await PDFDocument.create();
-      let page = pdfDoc.addPage([300, 410]);
-
-      let yPosition = 370;
-
-      const drawHeader = () => {
-        page.drawText('saveV', { x: 250, y: yPosition, size: 20, color: rgb(0.128, 0.128, 0.128) });
-        page.drawText('Invoice', { x: 20, y: yPosition, size: 20, color: rgb(0, 0, 0) });
-        yPosition -= 30;
-        page.drawText(`Invoice Number: ${paymentIntent}`, { x: 20, y: yPosition, size: 11, color: rgb(0.128, 0.128, 0.128) });
-        yPosition -= 15;
-        page.drawText(`Date of Issue: ${format(new Date(), 'dd-MM-yyyy')}`, { x: 20, y: yPosition, size: 10, color: rgb(0, 0, 0) });
-        yPosition -= 15;
-        page.drawText(`Time: ${format(new Date(), 'HH:mm:ss')}`, { x: 20, y: yPosition, size: 10, color: rgb(0, 0, 0) });
-        yPosition -= 30;
-        page.drawText(`SaveV`, { x: 20, y: yPosition, size: 11, color: rgb(0, 0, 0) });
-        page.drawText(`Pay To:`, { x: 140, y: yPosition, size: 11, color: rgb(0, 0, 0) });
-        yPosition -= 15;
-        page.drawText(`${userName}`, { x: 140, y: yPosition, size: 10, color: rgb(0, 0, 0) });
-        yPosition -= 15;
-        page.drawText(`${userEmail}`, { x: 140, y: yPosition, size: 10, color: rgb(0, 0, 0) });
-        yPosition -= 20;
-        page.drawRectangle({x:10, y: yPosition, width:300, height:1, color: rgb(0.128, 0.128, 0.128)})
-        yPosition -= 20;
-
-        
-      };
-      
-      const drawTableHeaders = () => {
-        page.drawText('Description', {x: 10, y: yPosition, size: 11, color: rgb(0,0,0)})
-        page.drawText('Quantity', {x: 170, y: yPosition, size: 11, color: rgb(0,0,0)})
-        page.drawText('Amount', {x: 260, y: yPosition, size: 11, color: rgb(0,0,0)})
-        yPosition -= 10;
-        page.drawRectangle({x:10, y: yPosition, width:300, height:1, color: rgb(0, 0, 0)})
-        yPosition -= 20;
-        
-      };
-
-      const drawTableContent = () => {
-        page.drawText('Posting charge', {x: 10, y: yPosition, size: 9, color: rgb(0,0,0)})
-        page.drawText('x1', {x: 190, y: yPosition, size: 9, color: rgb(0,0,0)})
-        page.drawText('$1.09', {x: 270, y: yPosition, size: 9, color: rgb(0,0,0)})
-        yPosition -= 20;
-        page.drawRectangle({x:10, y: yPosition, width:300, height:1, color: rgb(0, 0, 0)})
-        yPosition -= 15;
-        page.drawText('Total', {x: 10, y: yPosition, size: 9, color: rgb(0,0,0)})
-        page.drawText('$1.09', {x: 270, y: yPosition, size: 9, color: rgb(0,0,0)})
-        yPosition -= 10;
-        page.drawRectangle({x:250, y: yPosition, width:60, height:1, color: rgb(0, 0, 0)})
-        yPosition -= 3;
-        page.drawRectangle({x:250, y: yPosition, width:60, height:1, color: rgb(0, 0, 0)})
-        
-
-      }
-    
-      
-
-      drawHeader();
-      drawTableHeaders();
-      drawTableContent();
-
-      const pdfBytes = await pdfDoc.save();
-
-      const pdfPath = `${FileSystem.documentDirectory}receipt.pdf`;
-
-      await FileSystem.writeAsStringAsync(pdfPath,  btoa(String.fromCharCode(...pdfBytes)), {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-    
-      return pdfPath;
-  };
 
   const uploadImages = async () => {
     try {
@@ -277,7 +174,7 @@ export default function PaymentScreen() {
             loadMinimal={true}>
             {images.map((imageUri, index) => (
               <View key={index} style={styles.slide}>
-                <Image source={{uri: imageUri}} style={styles.image}/>
+                <Image source={{uri: imageUri}} style={styles.image} testID={`image-${index}`}/>
               </View>
             ))}
           </Swiper>
@@ -310,6 +207,8 @@ export default function PaymentScreen() {
           }}
           
           onCardChange={(cardDetails) => setCardDetails(cardDetails)}
+        
+          testID='card-field'
         />
 
         <Button onPress={handlePayPress} title="Pay" disabled={loading} />
