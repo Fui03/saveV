@@ -152,7 +152,7 @@ export default function PdfReceipt() {
           <View style={styles.container}>
             <Text style={styles.title}>Done Payment!</Text>
             <Text style={styles.caption}>You may print out your receipt!</Text>
-            <TouchableOpacity onPress={handleExportPdf}>
+            <TouchableOpacity onPress={handleExportPdf} testID='export'>
               <Fontisto name="export" size={24} color="black" style={styles.export}/>
             </TouchableOpacity>
           </View>

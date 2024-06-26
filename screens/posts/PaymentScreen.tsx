@@ -174,7 +174,7 @@ export default function PaymentScreen() {
             loadMinimal={true}>
             {images.map((imageUri, index) => (
               <View key={index} style={styles.slide}>
-                <Image source={{uri: imageUri}} style={styles.image}/>
+                <Image source={{uri: imageUri}} style={styles.image} testID={`image-${index}`}/>
               </View>
             ))}
           </Swiper>
@@ -207,6 +207,8 @@ export default function PaymentScreen() {
           }}
           
           onCardChange={(cardDetails) => setCardDetails(cardDetails)}
+        
+          testID='card-field'
         />
 
         <Button onPress={handlePayPress} title="Pay" disabled={loading} />

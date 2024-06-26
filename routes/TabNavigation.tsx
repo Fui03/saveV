@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Button, Pressable, Alert } from 'react-native';
 
-import Home from "@/screens/Home";
+import Home from "@/screens/posts/Home";
 import Transaction from "@/screens/transaction/Transaction";
 import Statistic from "@/screens/statistic/Statistic";
 import Profile from "@/screens/Profile";
@@ -11,7 +11,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { doc, getFirestore, onSnapshot } from "firebase/firestore";
 import * as ImagePicker from 'expo-image-picker';
-import AddPostNavigator from "@/screens/AddPostNavigator";
+import AddPostNavigator from "@/screens/posts/AddPostNavigator";
 
 export default function TabNavigation() {
     const Tab = createBottomTabNavigator();
