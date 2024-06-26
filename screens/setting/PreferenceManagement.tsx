@@ -60,6 +60,7 @@ export default function PreferenceManagement() {
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id}
                 numColumns={2}
+                testID='flatlist'
             />
         </SafeAreaView>
     );

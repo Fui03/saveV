@@ -19,7 +19,6 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth';
 import app from '../../firebaseConfig';
-import { getDatabase , ref, get} from "firebase/database";
 
 export default function Login() {
     const [email, setEmail] = useState<string | undefined>();
@@ -55,14 +54,18 @@ export default function Login() {
         }
     };
 
-    const resendVerificationEmail = () => {
+    const resendVerificationEmail = async () => {
         const auth = getAuth(app);
         const user = auth.currentUser;
         if (user) {
-          console.log(1)
-          sendEmailVerification(user)
-          .then(() => Alert.alert("Verification Email Resent", "Please check your email"))
-          .catch((e) => {Alert.alert("Error sending email", "Please try again later")});
+
+            try {
+                await sendEmailVerification(user)
+                Alert.alert("Verification Email Resent", "Please check your email")
+            } catch (e) {
+                Alert.alert("Error sending email", "Please try again later")
+            }
+
         }
     }
 
@@ -149,14 +152,14 @@ export default function Login() {
                         )}
                         
                         <View style = {styles.forgetPasswordContainer}>
-                            <TouchableOpacity onPress={() => navigation.navigate('ForgetPassword')}>
+                            <TouchableOpacity onPress={() => navigation.navigate('ForgetPassword')} testID="ForgetPassword">
                             <Text style={styles.forgetPasswordNavigation}>Forget Password?</Text>
                             </TouchableOpacity>
                         </View>
                         
                         <View style={styles.registerContainer}>
                             <Text style={styles.navigateTitle}>No account?</Text>
-                            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                            <TouchableOpacity onPress={() => navigation.navigate('Register')} testID="Register">
                                 <Text style={styles.navigateRegister}>Sign Up Now!</Text>
                             </TouchableOpacity>
                         </View>

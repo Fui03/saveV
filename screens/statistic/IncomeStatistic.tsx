@@ -19,8 +19,7 @@ export default function IncomeStatistic() {
         const user = auth.currentUser;
 
         if (user) {
-            // const db = getDatabase();
-            // const userRef = ref(db, `users/${user.uid}/Income`);
+
 
             const db = getFirestore();
             const userRef = doc(db, "users", user.uid);
@@ -31,7 +30,7 @@ export default function IncomeStatistic() {
                 const checkEmptyLabel = sideIncomes.some(income => income.name == '');
 
                 if (mainIncome && mainIncome <= 0) {
-                    Alert.alert("Error", "Income must be greater than zero!")
+                    Alert.alert("Error", "Income must be greater than or equal to zero!")
                     return;
                 }
                 
@@ -44,11 +43,6 @@ export default function IncomeStatistic() {
                     Alert.alert("Error", "Please put the label/name")
                     return;
                 }
-
-                // await update(userRef, {
-                //     mainIncome: mainIncome,
-                //     sideIncomes: sideIncomes,
-                // })
 
                 await setDoc(userRef, {
                     mainIncome: mainIncome,
