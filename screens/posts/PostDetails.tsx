@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { SafeAreaView, Pressable ,Text, StyleSheet, Image, View, Button, TextInput, ScrollView, FlatList, Dimensions, KeyboardAvoidingView, Alert, ListRenderItem, ListRenderItemInfo } from 'react-native';
+import { SafeAreaView, Pressable ,Text, StyleSheet, Image, View, Button, TextInput, ScrollView, FlatList, Dimensions, KeyboardAvoidingView, Alert, ListRenderItem, ListRenderItemInfo, Platform} from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
 import { addDoc, collection, doc, getFirestore, onSnapshot, updateDoc, getDocs, query, where, setDoc, deleteDoc, getDoc, orderBy, increment } from 'firebase/firestore';
@@ -475,6 +475,7 @@ import { Entypo } from '@expo/vector-icons';
         <View style={styles.endingContainer}>
           <Text style={styles.ending}>End</Text>
         </View>
+        
       )
 
       const renderComments = ({item}: ListRenderItemInfo<any>) => {
@@ -541,14 +542,19 @@ import { Entypo } from '@expo/vector-icons';
       }
       
       return (
-        <SafeAreaView style={styles.container}>                  
-                  <FlatList
-                    ListHeaderComponent={renderContent}
-                    ListFooterComponent={renderEnding}
-                    data={comments}
-                    keyExtractor={(item, index) => index.toString()}
-                    renderItem={renderComments}
-                  />
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+        > 
+          <SafeAreaView style={styles.container}>                  
+            <FlatList
+              ListHeaderComponent={renderContent}
+              ListFooterComponent={renderEnding}
+              data={comments}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={renderComments}
+            />
 
                   {isReplying && (
                         <View style={styles.statusBarContainer}>
@@ -558,6 +564,7 @@ import { Entypo } from '@expo/vector-icons';
                           </Pressable>
                         </View>
                       )}
+        
         
                   <View style={styles.footer}>
                     <TextInput
@@ -609,7 +616,8 @@ import { Entypo } from '@expo/vector-icons';
         
                   </View>
               </SafeAreaView>
-            );
+          </KeyboardAvoidingView>
+        );
 
   };
 
@@ -634,7 +642,7 @@ import { Entypo } from '@expo/vector-icons';
       paddingTop: 10
     },
     photoContainer: {
-      height: 400,
+      height: 500,
       // borderWidth:1,
       color: '#f5f6fa',
     },
@@ -676,7 +684,7 @@ import { Entypo } from '@expo/vector-icons';
     replyCommentContainer: {
       flexDirection:'row',
       justifyContent:'space-between',
-      width:'107%',
+      width: 330
       // borderWidth:1
     },
     statusBarContainer: {
@@ -704,7 +712,7 @@ import { Entypo } from '@expo/vector-icons';
       width: width,
       height: 500,
       // padding: 50,
-      resizeMode:'stretch'
+      // resizeMode:'stretch'
     },
     title: {
       paddingLeft: 5,

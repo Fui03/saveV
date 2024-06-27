@@ -38,7 +38,8 @@ export default function authStack() {
                         component={LoginPhoneNumber}/>
                     <Stack.Screen
                         name = "ForgetPassword"
-                        component={ForgetPassword}/>
+                        component={ForgetPassword}
+                        options={{headerShown: true, title: "Forget Password", headerBackTitle:"Login"}}/>
                     <Stack.Screen
                         name = "IncomeStatistic"
                         component={IncomeStatistic}

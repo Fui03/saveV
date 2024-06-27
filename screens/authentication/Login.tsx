@@ -12,7 +12,9 @@ import {
     ActivityIndicator,
     TouchableOpacity,
     Image,
-    Modal
+    Modal,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -96,9 +98,13 @@ export default function Login() {
     }, [modalVisibility]);
 
     return (
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <SafeAreaView style={styles.overall}>
-                <Image source={require('@/assets/images/logo1.png')} style={styles.logo} />
+                <Image source={require('@/assets/images/logo2.png')} style={styles.logo} />
                 <View style={styles.container}>
                 <Modal
                 animationType="slide"
@@ -107,10 +113,11 @@ export default function Login() {
                 onRequestClose={() =>{
                   setModalVisibility(!modalVisibility);
                 }}>
-                  <View style={{ flex: 10, justifyContent: 'center', alignItems: 'center' }}>
-                  <View style={{ margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 35, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 }}>
-                  <Text style={{ marginBottom: 15, textAlign: 'center' }}>Please verify your email address to proceed.</Text>
-                  <Button title="Resend Verification Email" onPress={resendVerificationEmail} testID="Resend"/>
+                    <View style={{ flex: 10, justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={{ margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 35, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 }}>
+                            <Text style={{ marginBottom: 15, textAlign: 'center' }}>Please verify your email address to proceed.</Text>
+                            <Button title="Resend Verification Email" onPress={resendVerificationEmail} testID="Resend"/>
+                            <Button title="Back" onPress={() => setModalVisibility(false)} testID="Resend"/>
                         </View>
                     </View>
                 </Modal>
@@ -168,6 +175,7 @@ export default function Login() {
                 {/* <Button title="Login Using Phone Number" onPress={() => navigation.navigate('LoginPhoneNumber')}/> */}
             </SafeAreaView>
         </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
 }
 
@@ -179,8 +187,8 @@ const styles = StyleSheet.create({
         alignItems: 'center', // Center everything horizontally
     },
     logo: {
-        width: 400, // Adjust width as needed
-        height: '30%', // Adjust height as needed
+        width: 200, // Adjust width as needed
+        height: 200, // Adjust height as needed
         marginBottom: 20,
     },
     container: {

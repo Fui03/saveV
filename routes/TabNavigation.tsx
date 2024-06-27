@@ -12,6 +12,11 @@ import { useNavigation } from "@react-navigation/native";
 import { doc, getFirestore, onSnapshot } from "firebase/firestore";
 import * as ImagePicker from 'expo-image-picker';
 import AddPostNavigator from "@/screens/posts/AddPostNavigator";
+import { TabBarIcon } from "@/components/navigation/TabBarIcon";
+import { Feather } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome6 } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function TabNavigation() {
     const Tab = createBottomTabNavigator();
@@ -63,7 +68,24 @@ export default function TabNavigation() {
     };
 
     return (
-        <Tab.Navigator screenOptions={{ headerShown: false }}>
+        <Tab.Navigator screenOptions={({ route }) => ({
+            tabBarIcon: ({ color, size }) => {
+                if (route.name == "Home") {
+                    return (<Feather name="home" size={24} color="black" />);
+                } else if(route.name == "Expenses") {
+                    return (<FontAwesome name="money" size={24} color="black" />)
+                } else if (route.name == 'AddPost') {
+                    return (<FontAwesome6 name="add" size={24} color="black" />)
+                } else if (route.name == 'Statistic') {
+                    return (<Feather name="pie-chart" size={24} color="black" />)
+                } else {
+                    return (<MaterialIcons name="account-circle" size={24} color="black" />)
+                }
+                
+            },
+            headerShown:false
+          })}
+        >
             <Tab.Screen name="Home" component={Home} />
             <Tab.Screen name="Expenses" component={Transaction} />
             {role == "Business"

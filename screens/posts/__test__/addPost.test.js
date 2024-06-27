@@ -51,11 +51,11 @@ describe('AddPost', () => {
     fireEvent.changeText(titleInput, 'My Title');
     expect(titleInput.props.value).toBe('My Title');
 
-    const captionInput = getByPlaceholderText('Enter caption');
+    const captionInput = getByPlaceholderText('Enter Caption');
     fireEvent.changeText(captionInput, 'My Caption');
     expect(captionInput.props.value).toBe('My Caption');
 
-    const spendingInput = getByPlaceholderText('Spending Range');
+    const spendingInput = getByPlaceholderText('Average Spending Range');
     fireEvent.changeText(spendingInput, '100');
     expect(spendingInput.props.value).toBe('100');
   });
@@ -64,8 +64,8 @@ describe('AddPost', () => {
     const { getByPlaceholderText, getByText } = render(<AddPost />);
 
     fireEvent.changeText(getByPlaceholderText('Enter Title'), 'My Title');
-    fireEvent.changeText(getByPlaceholderText('Enter caption'), 'My Caption');
-    fireEvent.changeText(getByPlaceholderText('Spending Range'), '100');
+    fireEvent.changeText(getByPlaceholderText('Enter Caption'), 'My Caption');
+    fireEvent.changeText(getByPlaceholderText('Average Spending Range'), '100');
 
     fireEvent.press(getByText('Save Post'));
 

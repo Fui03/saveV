@@ -130,7 +130,7 @@ const TransactionScreen = () => {
   const generatePdf = async (transactions: Transaction[]) => {
 
     const pdfDoc = await PDFDocument.create();
-    let page = pdfDoc.addPage([300, 410]);
+    let page = pdfDoc.addPage([320, 410]);
 
     const margin = 10;
 
@@ -184,7 +184,7 @@ const TransactionScreen = () => {
 
     transactions.forEach((transaction, rowIndex) => {
       if (yPosition < margin) {
-        page = pdfDoc.addPage([300, 410]);
+        page = pdfDoc.addPage([320, 410]);
         yPosition = 390;
         drawTableHeaders();
       }
@@ -192,7 +192,7 @@ const TransactionScreen = () => {
     });
 
     if (yPosition < margin) {
-      page = pdfDoc.addPage([300, 410]);
+      page = pdfDoc.addPage([320, 410]);
       yPosition = 390;
       drawTableHeaders();
     }
@@ -352,6 +352,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
+    borderRadius:10
   },
   fab: {
     position: 'absolute',

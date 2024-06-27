@@ -12,7 +12,9 @@ import {
     ActivityIndicator,
     TouchableOpacity,
     Image,
-    Modal
+    Modal,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -95,6 +97,10 @@ export default function ResetPassword() {
       }
   
     return (
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
             <SafeAreaView style={styles.overall}>
                 <Image source={require('@/assets/images/logo1.png')} style={styles.logo} />
@@ -163,6 +169,7 @@ export default function ResetPassword() {
                 </View>
             </SafeAreaView>
         </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
 }
 

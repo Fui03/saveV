@@ -26,7 +26,9 @@ const Home = () => {
     const [refreshing, setRefreshing] = useState(false);
 
     const [search, setSearch] = useState<string>('');
-    
+
+      const userSpendingRange = 50; // Assume user's spending range
+
     const fetchPosts = async (lastDoc?: any) => {
         setLoading(true);
         const db = getFirestore();
@@ -43,6 +45,13 @@ const Home = () => {
         ...doc.data()
         })) as Post[];
 
+        postsData.sort(() => Math.random() - 0.5);
+
+        // Sort posts by the difference in spendingRange to user's spendingRange
+        const sortedPosts = postsData.sort((a, b) =>
+        Math.abs(a.spendingRange - userSpendingRange) - Math.abs(b.spendingRange - userSpendingRange)
+        );
+
         if (documentSnapshots.docs.length > 0) {
             setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
         }
@@ -50,7 +59,7 @@ const Home = () => {
         if (lastDoc) {
             setPosts(prevPosts => [...prevPosts, ...postsData]);
         } else {
-            setPosts(postsData);
+            setPosts(sortedPosts);
         }
 
         setLoading(false);
@@ -132,9 +141,10 @@ const styles = StyleSheet.create({
     card: {
         flex:1,
         backgroundColor: '#fff',
-        borderRadius: 10,
+        borderRadius: 5,
         padding: 20,
-        marginVertical: 5,
+        marginVertical: 1,
+        marginHorizontal: 1,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
