@@ -11,7 +11,8 @@ import {
   Alert,
   KeyboardAvoidingView,
   Modal,
-  Image
+  Image,
+  Platform
 } from "react-native";
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -202,15 +203,19 @@ export default function Register() {
   // },[Recaptcha])
 
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
     <TouchableWithoutFeedback
       onPress={() => {
         Keyboard.dismiss();
       }}
     >
       <SafeAreaView style={styles.overall}>
-        
+        <Image source={require('@/assets/images/logo2.png')} style={styles.logo_image} />
+        <Text style={styles.title}>Register</Text>
         <View id="recaptcha-container"></View>
-        <KeyboardAvoidingView behavior="padding" />
         <View style={styles.container}>
         <Modal
           animationType="slide"
@@ -223,11 +228,10 @@ export default function Register() {
               <View style={{ margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 35, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 }}>
                 <Text style={{ marginBottom: 15, textAlign: 'center' }}>Please verify your email address to proceed.</Text>
                 <Button title="Resend Verification Email" onPress={resendVerificationEmail} testID="Resend"/>
+                <Button title="Back" onPress={() => setModalVisibility(false)} testID="Resend"/>
               </View>
             </View>
           </Modal>
-          <Image source={require('@/assets/images/logo1.png')} style={styles.logo_image} />
-          <Text style={styles.title}>Register</Text>
           <View style={styles.content}>
             <TextInput
               style={styles.input}
@@ -291,6 +295,7 @@ export default function Register() {
         </View>
       </SafeAreaView>
     </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -299,28 +304,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     justifyContent: "center",
+    alignItems:'center'
   },
   logo_image: {
-    width: 370, // Adjust width as needed
-    height: 200, // Adjust height as needed
+    width: 150, // Adjust width as needed
+    height: 150, // Adjust height as needed
     marginBottom: 20,
+    // marginLeft: 30,
     alignItems: "center",
   },
   container: {
-    flex: 1,
+    // flex: 1,
     marginHorizontal: 40,
     backgroundColor: "white",
     paddingTop: 20,
+    width:'80%'
   },
   title: {
     textAlign: 'center',
     color: '#262626',
     fontSize: 30,
     fontWeight: 'bold',
-    height: '5%'
+    // height: '5%'
   },
   content: {
-    flex: 1,
+    // flex: 1,
     justifyContent: "center",
   },
   input: {

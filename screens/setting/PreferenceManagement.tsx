@@ -74,10 +74,10 @@ const styles = StyleSheet.create({
   card: {
         flex:1,
         backgroundColor: '#fff',
-        borderRadius: 10,
+        borderRadius: 5,
         padding: 20,
-        // marginHorizontal: 20,
-        marginVertical: 5,
+        marginVertical: 1,
+        marginHorizontal: 1,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
         elevation: 5,
         alignItems:'center',
         justifyContent:'center'
-  },
+    },
   cardImage: {
       width: 180,
       height: 180,

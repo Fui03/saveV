@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Button, Text, Alert, StyleSheet, SafeAreaView, Image, Dimensions } from 'react-native';
+import { View, Button, Text, Alert, StyleSheet, SafeAreaView, Image, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { CardField, useStripe } from '@stripe/stripe-react-native';
 import { PDFDocument, rgb } from 'pdf-lib';
 import * as FileSystem from 'expo-file-system';
@@ -9,7 +9,7 @@ import * as Sharing from 'expo-sharing';
 import { getAuth } from 'firebase/auth';
 import { addDoc, collection, doc, getDoc, getFirestore, serverTimestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
-import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import { getDownloadURL, getStorage, ref, uploadBytes , uploadBytesResumable } from 'firebase/storage';
 import Swiper from 'react-native-swiper';
 
 
@@ -101,8 +101,15 @@ export default function PaymentScreen() {
             const response = await fetch(uri);
             const blob = await response.blob();
             const postRef = ref(storage, `postImages/${Date.now()}_${index}`);
-
-            await uploadBytes(postRef, blob);
+            
+            const uploadTask = uploadBytesResumable(postRef, blob);
+            await new Promise((resolve, reject) => {
+              uploadTask.on('state_changed', 
+                () => {},
+                (error) => reject(error),
+                () => resolve(uploadTask.snapshot)
+              );
+            });
             const downloadURL = await getDownloadURL(postRef);
             return downloadURL;
         });
@@ -167,6 +174,10 @@ export default function PaymentScreen() {
       
 
     return(
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
       <SafeAreaView style={styles.overall}>
           <Swiper 
             style={styles.swiper} 
@@ -213,6 +224,7 @@ export default function PaymentScreen() {
 
         <Button onPress={handlePayPress} title="Pay" disabled={loading} />
       </SafeAreaView>
+      </KeyboardAvoidingView>
     )
 }
 
@@ -242,23 +254,22 @@ const styles = StyleSheet.create({
     width: '80%',
     alignItems: 'center',
     marginTop:30,
+    // borderWidth:1
   },
   swiper: {
-    height: 400,
-    marginBottom:20,
+    height: 300,
+    marginBottom: 20,
+    // borderWidth:1
   },
   slide: {
-    // flex:1,
-    flexWrap: 'wrap',
-    justifyContent:'center',
-    alignItems:'center',
-    // padding:10,
+      // flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
   },
   image: {
-    width: width,
-    height: 500,
-    // padding: 50,
-    resizeMode:'stretch'
+      width: 300,
+      height: 300,
+      borderRadius:10,
   },
   paymentHeader: {
     fontSize:18,

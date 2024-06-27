@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, TextInput, Button, StyleSheet, Text, View, Image, Alert, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { SafeAreaView, TextInput, Button, StyleSheet, Text, View, Image, Alert, Keyboard, TouchableWithoutFeedback , KeyboardAvoidingView, Platform} from 'react-native';
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { getAuth } from 'firebase/auth';
 import { addDoc, collection, getFirestore, serverTimestamp } from 'firebase/firestore';
@@ -37,12 +37,19 @@ export default function AddPost() {
                 title: title,
                 caption: caption,
                 spendingRange: spendingRange});
+            setTitle('')
+            setCaption('')
+            setSpendingRange(undefined);
         } else {
             Alert.alert("Fill in all the details needed!");
         }
     }
 
     return (
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
         <SafeAreaView style={styles.overall}>
             <View style={styles.header}>
                 {images.length > 0 && (
@@ -60,12 +67,14 @@ export default function AddPost() {
                 <TextInput
                     style={styles.titleInput}
                     placeholder="Enter Title"
+                    placeholderTextColor="#A9A9A9"
                     value={title}
                     onChangeText={setTitle}
                 />
                 <TextInput
                     style={styles.captionInput}
-                    placeholder="Enter caption"
+                    placeholder="Enter Caption"
+                    placeholderTextColor="#A9A9A9"
                     value={caption}
                     onChangeText={setCaption}
                     multiline
@@ -73,7 +82,7 @@ export default function AddPost() {
                 />
                 <TextInput 
                     style={styles.spendingInput}
-                    placeholder='Spending Range'
+                    placeholder='Average Spending Range'
                     placeholderTextColor="#aaa"
                     keyboardType='number-pad'
                     value={(spendingRange === undefined || Number.isNaN(spendingRange))  ? '' : spendingRange.toString(10)}
@@ -84,6 +93,7 @@ export default function AddPost() {
             </View>
 
         </SafeAreaView>
+        </KeyboardAvoidingView>
     );
 }
 
@@ -97,12 +107,13 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         // backgroundColor: '#FFD700',
-        padding: 20,
+        // padding: 20,
         // borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'space-around',
-        marginBottom: 30,
-        // height: 200
+        marginBottom: 10,
+        // // height: 200
+        // borderWidth:1
     },
     container: {
         backgroundColor: '#fff',
@@ -117,22 +128,22 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         elevation: 5,
-        width: '100%', // Adjust width as needed
+        width: '95%', // Adjust width as needed
         alignItems: 'center',
-        
     },
     swiper: {
-        height: 220,
+        height: 230,
         marginBottom: 20,
     },
     slide: {
-        flex: 1,
+        // flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
     image: {
-        width: 150,
-        height: 150,
+        width: 250,
+        height: 250,
+        borderRadius:10,
     },
     titleInput: {
         height: 50,
@@ -152,7 +163,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     captionInput: {
-        height: 150,
+        height: 100,
         // borderWidth: 1,
         borderBottomWidth:1,
         paddingHorizontal: 10,
