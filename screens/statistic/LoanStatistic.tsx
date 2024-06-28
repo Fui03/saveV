@@ -11,6 +11,10 @@ export default function LoanStatistic() {
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
     const [loan, setLoan] = useState<{name: string, amount: number}[]>([]);
+    const [mainIncome, setMainIncome] = useState<number>(0);
+    const [sideIncomes, setSideIncomes] = useState<{ name: string, amount: number }[]>([]);
+    // const [totalLoan, setTotalLoan] = useState<number>(0);
+    const [totalSideIncome, setTotalSideIncome] = useState<number>(0);
     const [isEditable, setIsEditable] = useState<boolean>(false);
     
     const handleSave = async () => {
@@ -18,8 +22,6 @@ export default function LoanStatistic() {
         const user = auth.currentUser;
 
         if (user) {
-            // const db = getDatabase();
-            // const userRef = ref(db, `users/${user.uid}/Loan`);
 
             const db = getFirestore();
             const userRef = doc(db, "users", user.uid);
@@ -28,10 +30,16 @@ export default function LoanStatistic() {
 
                 const checkZeroLoan = loan.some(loan => loan.amount <= 0);
                 const checkEmptyLabel = loan.some(loan => loan.name == '');
+                const checkIsNaN = loan.some(loan => isNaN(loan.amount));
 
                 
                 if (checkZeroLoan) {
                     Alert.alert("Error", "Loan must be greater than zero!")
+                    return;
+                }
+
+                if (checkIsNaN) {
+                    Alert.alert("Error", "Loan amount cannot be Empty!")
                     return;
                 }
 
@@ -40,17 +48,26 @@ export default function LoanStatistic() {
                     return;
                 }
 
-                // await update(userRef, {
-                //     loan: loan,
-                // })
+                const totalLoan = loan.reduce(
+                    (acc: number, loan: { name: string; amount: number }) =>
+                      acc + loan.amount,
+                    0
+                );
+
+                const totalTax = mainIncome * searchPercentageOfTax(mainIncome);
+                const totalCPF = mainIncome * 0.2;
+                const spendingPower = mainIncome + totalSideIncome - totalLoan - totalTax - totalCPF;
 
                 await setDoc(userRef,{
                     loan: loan,
+                    spendingPower: spendingPower
                 },{merge:true})
 
                 setIsEditable(false);
                 
                 Alert.alert("Success", "Update Successful")
+                navigation.goBack();
+
             } catch (e) {
                 Alert.alert("Error", "Try Again")
             }
@@ -76,6 +93,39 @@ export default function LoanStatistic() {
         setLoan(updatedLoan);
     }
 
+    const searchPercentageOfTax = (income: number) => {
+        const annualIncome = income * 12;
+        const taxRange = [
+            { amount: 20000, tax: 0 },
+            { amount: 30000, tax: 0.02 },
+            { amount: 40000, tax: 0.035 },
+            { amount: 80000, tax: 0.07 },
+            { amount: 120000, tax: 0.115 },
+            { amount: 160000, tax: 0.15 },
+            { amount: 200000, tax: 0.18 },
+            { amount: 240000, tax: 0.19 },
+            { amount: 280000, tax: 0.195 },
+            { amount: 320000, tax: 0.2 },
+            { amount: 500000, tax: 0.22 },
+            { amount: 1000000, tax: 0.23 },
+            { amount: Number.POSITIVE_INFINITY, tax: 0.24 },
+        ];
+
+        var begin = 0;
+        var end = taxRange.length;
+
+        while (begin < end) {
+            const mid = Math.floor((begin + end) / 2);
+            if (annualIncome <= taxRange[mid].amount) {
+                end = mid;
+            } else {
+                begin = mid + 1;
+            }
+        }
+
+        return taxRange[begin].tax;
+    };
+
     useEffect(() => {
     
         const fetchUserData = async () => {
@@ -83,9 +133,6 @@ export default function LoanStatistic() {
             const user = auth.currentUser;
 
             if (user) {
-                // const db = getDatabase();
-                // const userRef = ref(db, `users/${user.uid}/Loan`);
-                // const snapshot = await get(userRef);
 
                 const db = getFirestore();
                 const userRef = doc(db, "users", user.uid);
@@ -96,6 +143,25 @@ export default function LoanStatistic() {
                     if (userData.loan !== undefined) {
                         setLoan(userData.loan);
                     }
+
+                    if (userData.mainIncome != undefined) {
+                        setMainIncome(userData.mainIncome);
+                    }
+
+                    if (userData.sideIncomes !== undefined) {
+                        setSideIncomes(userData.sideIncomes);
+                        
+                        const totalSideIncome = userData.sideIncomes.reduce(
+                            (acc: number, income: { name: string; amount: number }) =>
+                                acc + income.amount,
+                                0
+                        );
+                                            
+                        setTotalSideIncome(totalSideIncome);
+                    }
+
+
+
                 } 
             }
         }
@@ -117,7 +183,6 @@ export default function LoanStatistic() {
             }}>
                 <ScrollView contentContainerStyle={styles.overall}>
                     <View style={styles.modalHeader}>
-                        {/* <Button title="Back" onPress={() => setIsEditable(false)}/> */}
                         <Button title="Save" onPress={handleSave}/>
                     </View>
                    

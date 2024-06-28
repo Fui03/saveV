@@ -1,20 +1,23 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, TextInput, Button, Modal, Alert} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, Button, Modal, Alert } from 'react-native';
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useNavigation} from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { getAuth, getIdToken, getMultiFactorResolver, signInWithRedirect } from 'firebase/auth';
-import { getDatabase ,ref, update, get} from 'firebase/database';
-import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
+import { getDatabase, ref, update, get } from 'firebase/database';
+import { doc, getDoc, getFirestore, setDoc, onSnapshot } from 'firebase/firestore';
 
 export default function IncomeStatistic() {
-    
+
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
-    const [mainIncome, setMainIncome] = useState<number | undefined>();
-    const [sideIncomes, setSideIncomes] = useState<{name: string, amount: number}[]>([]);
+    const [mainIncome, setMainIncome] = useState<number>(0);
+    const [sideIncomes, setSideIncomes] = useState<{ name: string, amount: number }[]>([]);
     const [isEditable, setIsEditable] = useState<boolean>(false);
-    
-    const handleSave = async () => {
+    const [totalLoan, setTotalLoan] = useState<number>(0);
+
+    const MAX_AMOUNT = 1e13;
+
+    const handleSave =  async () => {
         const auth = getAuth();
         const user = auth.currentUser;
 
@@ -28,14 +31,21 @@ export default function IncomeStatistic() {
 
                 const checkZeroSides = sideIncomes.some(income => income.amount <= 0);
                 const checkEmptyLabel = sideIncomes.some(income => income.name == '');
+                const checkIsNaN = sideIncomes.some(income => isNaN(income.amount));
+
 
                 if (mainIncome && mainIncome <= 0) {
                     Alert.alert("Error", "Income must be greater than or equal to zero!")
                     return;
                 }
-                
+
                 if (checkZeroSides) {
                     Alert.alert("Error", "Side Income must be greater than zero!")
+                    return;
+                }
+                
+                if (checkIsNaN) {
+                    Alert.alert("Error", "Side Income amount cannot be Empty!")
                     return;
                 }
 
@@ -44,15 +54,48 @@ export default function IncomeStatistic() {
                     return;
                 }
 
-                await setDoc(userRef, {
-                    mainIncome: mainIncome,
-                    sideIncomes: sideIncomes,
-                },{merge:true})
+                if (mainIncome > MAX_AMOUNT || sideIncomes.some(income => income.amount > MAX_AMOUNT)) {
+                    Alert.alert("Error", `Amount should not exceed ${MAX_AMOUNT}!`);
+                    return;
+                }
                 
+
+                const totalSideIncome = sideIncomes.reduce(
+                    (acc: number, income: { name: string; amount: number }) =>
+                        acc + income.amount,
+                        0
+                );
+
+                if (mainIncome === undefined || isNaN(mainIncome)) {
+                    const totalTax = 0;
+
+                    await setDoc(userRef, {
+                        mainIncome: mainIncome || 0,
+                        sideIncomes: sideIncomes,
+                        totalTax: totalTax,
+                        spendingPower: totalSideIncome
+                    }, { merge: true })
+
+                } else {
+
+                    const totalTax = mainIncome * await searchPercentageOfTax(mainIncome);
+                    const totalCPF = mainIncome * 0.2;
+                    const spendingPower = mainIncome + totalSideIncome - totalLoan - totalTax - totalCPF;
+
+                    await setDoc(userRef, {
+                        mainIncome: mainIncome,
+                        sideIncomes: sideIncomes,
+                        totalTax: totalTax,
+                        spendingPower: spendingPower
+                    }, { merge: true })
+                }
+
                 setIsEditable(false);
-                
+
                 Alert.alert("Success", "Update Successful")
+                navigation.goBack();
             } catch (e) {
+                console.error(e)
                 Alert.alert("Error", "Try Again")
             }
         }
@@ -69,7 +112,7 @@ export default function IncomeStatistic() {
     }
 
     const addSideIncome = () => {
-        setSideIncomes([...sideIncomes, {name: '', amount: 0}])
+        setSideIncomes([...sideIncomes, { name: '', amount: 0 }])
     }
 
     const removeSideIncome = (index: number) => {
@@ -77,16 +120,46 @@ export default function IncomeStatistic() {
         setSideIncomes(updatedSideIncomes);
     }
 
+    const searchPercentageOfTax = (income: number) => {
+        const annualIncome = income * 12;
+        const taxRange = [
+            { amount: 20000, tax: 0 },
+            { amount: 30000, tax: 0.02 },
+            { amount: 40000, tax: 0.035 },
+            { amount: 80000, tax: 0.07 },
+            { amount: 120000, tax: 0.115 },
+            { amount: 160000, tax: 0.15 },
+            { amount: 200000, tax: 0.18 },
+            { amount: 240000, tax: 0.19 },
+            { amount: 280000, tax: 0.195 },
+            { amount: 320000, tax: 0.2 },
+            { amount: 500000, tax: 0.22 },
+            { amount: 1000000, tax: 0.23 },
+            { amount: Number.POSITIVE_INFINITY, tax: 0.24 },
+        ];
+
+        var begin = 0;
+        var end = taxRange.length;
+
+        while (begin < end) {
+            const mid = Math.floor((begin + end) / 2);
+            if (annualIncome <= taxRange[mid].amount) {
+                end = mid;
+            } else {
+                begin = mid + 1;
+            }
+        }
+
+        return taxRange[begin].tax;
+    };
+
     useEffect(() => {
-    
+
         const fetchUserData = async () => {
             const auth = getAuth();
             const user = auth.currentUser;
 
             if (user) {
-                // const db = getDatabase();
-                // const userRef = ref(db, `users/${user.uid}/Income`);
-                // const snapshot = await get(userRef);
 
                 const db = getFirestore();
                 const userRef = doc(db, "users", user.uid);
@@ -94,48 +167,61 @@ export default function IncomeStatistic() {
 
                 if (snapshot.exists()) {
                     const userData = snapshot.data();
+
                     setMainIncome(userData.mainIncome);
+
                     if (userData.sideIncomes !== undefined) {
-                        setSideIncomes(userData.sideIncomes);
+                        setSideIncomes(userData.sideIncomes);                       
+                        
                     }
+
+                    const loan = userData.loan || [];
+                    const totalLoan = loan.reduce(
+                        (acc: number, loan: { name: string; amount: number }) =>
+                          acc + loan.amount,
+                        0
+                    );
+                    
+                    setTotalLoan(totalLoan);
+
                 } else {
                     setMainIncome(0);
-                    
+                    setTotalLoan(0);
                 }
+                
             }
         }
         fetchUserData();
+
+    }, []);
     
-    },[])
-    
+
 
     return (
 
-
         <ScrollView contentContainerStyle={styles.overall}>
             <Modal
-            animationType='fade'
-            transparent={false}
-            visible={isEditable}
-            onRequestClose={() => {
-                setIsEditable(!isEditable);
-            }}>
+                animationType='fade'
+                transparent={false}
+                visible={isEditable}
+                onRequestClose={() => {
+                    setIsEditable(!isEditable);
+                }}>
                 <ScrollView contentContainerStyle={styles.overall}>
                     <View style={styles.modalHeader}>
-                        {/* <Button title="Back" onPress={() => setIsEditable(false)}/> */}
-                        <Button title="Save" onPress={handleSave}/>
+                        <Button title="Save" onPress={handleSave} />
                     </View>
                     <View style={styles.container}>
                         <Text style={styles.title}>Main Income</Text>
-                        <TextInput 
+                        <TextInput
                             style={styles.input}
                             placeholder='Main Income'
                             placeholderTextColor="#aaa"
                             keyboardType='number-pad'
-                            value={(mainIncome === undefined || Number.isNaN(mainIncome))  ? '' :mainIncome.toString(10)}
+                            value={(mainIncome === undefined || Number.isNaN(mainIncome)) ? '' : mainIncome.toString(10)}
                             onChangeText={(text) => setMainIncome(parseFloat(text))}
-                        />  
-                        
+                        />
+
                     </View>
                     <View style={styles.container}>
                         <Text style={styles.title}>Side Income</Text>
@@ -143,7 +229,7 @@ export default function IncomeStatistic() {
                             <View key={index} style={styles.input}>
                                 <View style={styles.sideIncomeTextContainer}>
                                     <Text style={styles.modalText}>Name:</Text>
-                                    <TextInput 
+                                    <TextInput
                                         style={styles.modalInput}
                                         placeholder='Label'
                                         placeholderTextColor="#aaa"
@@ -153,7 +239,7 @@ export default function IncomeStatistic() {
                                 </View>
                                 <View style={styles.sideIncomeTextContainer}>
                                     <Text style={styles.modalText}>Amount:</Text>
-                                    <TextInput 
+                                    <TextInput
                                         style={styles.modalInput}
                                         placeholder='Amount'
                                         placeholderTextColor="#aaa"
@@ -163,19 +249,19 @@ export default function IncomeStatistic() {
 
                                 </View>
 
-                                <Button title="Delete" onPress={() => removeSideIncome(index)}/>
+                                <Button title="Delete" onPress={() => removeSideIncome(index)} />
                             </View>
-                            
+
                         ))
                         }
-                        <Button title="Add Side Income" onPress={addSideIncome}/>
+                        <Button title="Add Side Income" onPress={addSideIncome} />
                     </View>
                 </ScrollView>
             </Modal>
 
             <View style={styles.container}>
                 <Text style={styles.title}>Main Income</Text>
-                <Text style={styles.title}>${(mainIncome === undefined || Number.isNaN(mainIncome))  ? '0' :mainIncome.toString(10)}</Text>
+                <Text style={styles.title}>${(mainIncome === undefined || Number.isNaN(mainIncome)) ? '0' : mainIncome.toString(10)}</Text>
             </View>
             <View style={styles.container}>
                 <Text style={styles.title}>Side Income</Text>
@@ -183,7 +269,7 @@ export default function IncomeStatistic() {
                     <Text>-</Text>
                 ) : (
                     sideIncomes.map((income, index) => (
-                        <View key = {index} style={styles.input}>
+                        <View key={index} style={styles.input}>
                             <View style={styles.sideIncomeTextContainer}>
                                 <Text style={styles.modalText}>Name:</Text>
                                 <Text style={styles.sideIncomeText}>{income.name}</Text>
@@ -197,7 +283,7 @@ export default function IncomeStatistic() {
                 )}
             </View>
 
-            <Button title="Edit" onPress={() => setIsEditable(true)}/>
+            <Button title="Edit" onPress={() => setIsEditable(true)} />
         </ScrollView>
     );
 }
@@ -225,8 +311,8 @@ const styles = StyleSheet.create({
         elevation: 5,
         width: '80%', // Adjust width as needed
         alignItems: 'center',
-        marginBottom:10,
-        marginTop:20
+        marginBottom: 10,
+        marginTop: 20
     },
     title: {
         color: '#2c3e50',
@@ -238,7 +324,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: '#34495e',
         marginBottom: 5,
-        fontWeight:'bold'
+        fontWeight: 'bold'
     },
     modalHeader: {
         flexDirection: 'row',
@@ -252,7 +338,7 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent:'space-around',
+        justifyContent: 'space-around',
         borderColor: '#dcdde1',
         backgroundColor: '#f5f6fa',
         marginBottom: 15,
@@ -266,7 +352,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#ecf0f1',
         fontSize: 16,
         color: '#2c3e50',
-        width:'100%'
+        width: '100%'
     },
     modalInput: {
         flex: 1,
@@ -280,19 +366,19 @@ const styles = StyleSheet.create({
     },
     modalText: {
         fontSize: 17,
-        fontWeight:"bold",
+        fontWeight: "bold",
         marginRight: 15
     },
     sideIncomeText: {
         flex: 1,
         padding: 10,
         fontSize: 17,
-        fontWeight:'bold',
+        fontWeight: 'bold',
     },
     sideIncomeTextContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent:'space-around',
+        justifyContent: 'space-around',
         marginBottom: 10,
     },
     sideIncomeRow: {

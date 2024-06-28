@@ -26,7 +26,6 @@ import {
   sum,
   where,
 } from "firebase/firestore";
-//import PieChart from 'react-native-pie-chart';
 import { PieChart } from "react-native-chart-kit";
 import { Dimensions } from "react-native";
 
@@ -95,8 +94,6 @@ const Statistic = () => {
   }, []);
 
   useEffect(() => {
-    // console.log(`mainIncome: ${mainIncome}, sideIncome: ${sideIncome}`);
-    // console.log(if(mainIncome))
     if (mainIncome !== undefined || sideIncome !== undefined) {
       const computedTotalIncome = mainIncome + sideIncome;
       setTotalIncome(computedTotalIncome);
@@ -147,8 +144,7 @@ const Statistic = () => {
     const percentageOfCPF = ((mainIncome * 0.2) / totalIncome) * 100;
     const percentageOfRemaining =
       100 - percentageOfCPF - percentageOfTax - percentageOfLoan;
-    //const series = [percentageOfCPF, percentageOfLoan, percentageOfRemaining, percentageOfSideIncome, percentageOfTax];
-    //const sliceColor = ['#d4f0f0', '#8fcaca', '#cce2cb', '#b6cfb6', '#97c1a9'];
+
 
     const data = [
       {
