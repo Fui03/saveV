@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { SafeAreaView, Text, StyleSheet , Button, Image, View, FlatList, TouchableOpacity, TextInput, Alert} from 'react-native';
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation} from "@react-navigation/native";
-import { collection, getDocs, getFirestore, limit, onSnapshot, orderBy, query, startAfter } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, getFirestore, limit, onSnapshot, orderBy, query, startAfter, where } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 
 type Post = {
@@ -24,60 +25,147 @@ const Home = () => {
     const [lastVisible, setLastVisible] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [spendingRange, setSpendingRange] = useState<number>(0);
 
     const [search, setSearch] = useState<string>('');
 
-      const userSpendingRange = 50; // Assume user's spending range
+      
+    const spendingDelta = 10;
+
+    const high = spendingRange + spendingDelta;
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const auth = getAuth();
+            const user = auth.currentUser;
+
+            if (user) {
+
+                const db = getFirestore();
+                const userRef = doc(db, `users`, user.uid);
+                const snapshot = await getDoc(userRef);
+
+                if (snapshot.exists()) {
+                    const userData = snapshot.data();
+
+                    if (userData.spendingPower / 90 <= 40) {
+                        setSpendingRange(40)
+                    } else {
+                        setSpendingRange(userData.spendingPower / 90);
+                    }
+                } else {
+                    Alert.alert("Error", "No data found!");
+                }
+            }
+        }
+
+        fetchUserData();
+        fetchPosts();
+    },[])
+
+    const fetchUserData = async () => {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (user) {
+
+            const db = getFirestore();
+            const userRef = doc(db, `users`, user.uid);
+            const snapshot = await getDoc(userRef);
+
+            if (snapshot.exists()) {
+                const userData = snapshot.data();
+
+                if (userData.spendingPower / 90 <= 40) {
+                    setSpendingRange(40)
+                } else {
+                    setSpendingRange(userData.spendingPower / 90);
+                }
+            } else {
+                Alert.alert("Error", "No data found!");
+            }
+        }
+    }
 
     const fetchPosts = async (lastDoc?: any) => {
+
         setLoading(true);
+        
         const db = getFirestore();
         const postsRef = collection(db, 'posts');
-        let q = query(postsRef, orderBy('timestamp', 'desc'), limit(10));
         
+        let q =  query(postsRef, 
+            // where('spendingRange', '>=', low),
+            where('spendingRange', '<=', high), 
+            // where('randomValue', '>', randomThreshold),
+            // orderBy('randomValue'),
+            // orderBy('spendingRange'),
+            // orderBy('timestamp', 'desc'), 
+            limit(15));
+            
         if (lastDoc) {
-        q = query(postsRef, orderBy('timestamp', 'desc'), startAfter(lastDoc), limit(10));
+        q = query(postsRef, 
+            // where('spendingRange', '>=', low),
+            where('spendingRange', '<=', high), 
+            // where('randomValue', '>', randomThreshold),
+            // orderBy('randomValue'),
+            // orderBy('spendingRange'),
+            // orderBy('timestamp', 'desc'), 
+            startAfter(lastDoc), 
+            limit(10));
         }
-        
+
+     
         const documentSnapshots = await getDocs(q);
         const postsData: Post[] = documentSnapshots.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
         })) as Post[];
 
-        postsData.sort(() => Math.random() - 0.5);
+        // console.log('Fetched Posts:', postsData);
 
-        // Sort posts by the difference in spendingRange to user's spendingRange
-        const sortedPosts = postsData.sort((a, b) =>
-        Math.abs(a.spendingRange - userSpendingRange) - Math.abs(b.spendingRange - userSpendingRange)
-        );
+
+        postsData.sort(() => Math.random() - Math.random());
 
         if (documentSnapshots.docs.length > 0) {
             setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
         }
 
         if (lastDoc) {
-            setPosts(prevPosts => [...prevPosts, ...postsData]);
+            const uniquePosts = [...posts, ...postsData].reduce<Post[]>((unique, o) => {
+                if (!unique.some((obj) => obj.id === o.id)) {
+                  unique.push(o);
+                }
+                return unique;
+            }, []);
+    
+            setPosts(uniquePosts);
         } else {
-            setPosts(sortedPosts);
+            setPosts(postsData);
         }
 
         setLoading(false);
     };
 
-    useEffect(() => {
-        fetchPosts();
-    }, []);
+    // useEffect(() => {
+    //     fetchPosts();
+    // }, []);
 
     const handleLoadMore = () => {
         if (!loading && lastVisible) {
-        fetchPosts(lastVisible);
+            fetchPosts(lastVisible);
         }
     };
 
-    const handleRefresh = () => {
+    const handleRefresh = async () => {
         setRefreshing(true);
-        fetchPosts().then(() => setRefreshing(false));
+        setLastVisible(null);
+        try {
+            await fetchUserData();
+            await fetchPosts(); 
+        } finally {
+            setRefreshing(false);
+        }
     };
 
     const handleSearch = async () => {

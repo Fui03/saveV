@@ -124,6 +124,8 @@ export default function PaymentScreen() {
   const savePost = async () => {
     const auth = getAuth();
     const user = auth.currentUser;
+    const randomValue = Math.random();
+
 
     if (user && images.length > 0) {
         const db = getFirestore();
@@ -140,6 +142,7 @@ export default function PaymentScreen() {
             timestamp: serverTimestamp(),
             likes: 0,
             comments: [],
+            randomValue: randomValue
           });
 
           const postId = postDoc.id;

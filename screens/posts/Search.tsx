@@ -42,7 +42,7 @@ const Search = () => {
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
-    const chunks = chunkArray(postIds, 4);
+    const chunks = chunkArray(postIds, 10);
 
     const fetchPosts = async (chunkIndex: number) => {
         if (chunkIndex >= chunks.length) return;
@@ -59,8 +59,13 @@ const Search = () => {
             }
         })) as Post[];
     
-        setPosts(prevPosts => [...prevPosts, ...fetchedPosts.filter(post => post !== null)]);
-        setLoading(false);
+        setPosts((prevPosts) => {
+            const uniquePosts = [...prevPosts, ...fetchedPosts.filter(post => post !== null)]
+              .filter((post, index, self) => self.findIndex(p => p.id === post.id) === index);
+            return uniquePosts;
+          });
+        
+          setLoading(false);
         setLastChunkIndex(chunkIndex);
     };
 
