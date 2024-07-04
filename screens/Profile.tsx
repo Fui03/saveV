@@ -3,7 +3,7 @@ import { SafeAreaView, Text, StyleSheet , Button, Alert, TouchableOpacity, Image
 import { getAuth, signOut } from "firebase/auth";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation} from "@react-navigation/native";
-import { collection, doc, getDocs, getFirestore, limit, onSnapshot, query, setDoc, startAfter, where } from 'firebase/firestore';
+import { collection, doc, getDocs, getFirestore, limit, onSnapshot, orderBy, query, setDoc, startAfter, where } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, getStorage, ref, uploadBytes , uploadBytesResumable } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -62,7 +62,7 @@ const Profile = () => {
 
     const db = getFirestore();
     const postsRef = collection(db, 'posts');
-    let q = query(postsRef, where('userId', '==', userUid), limit(9));
+    let q = query(postsRef, where('userId', '==', userUid), orderBy('timestamp', 'desc') ,limit(9));
 
     if (startAfterDoc) {
       q = query(postsRef, where('userId', '==', userUid), startAfter(startAfterDoc), limit(9));
