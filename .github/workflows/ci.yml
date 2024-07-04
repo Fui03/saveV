@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [20.x]
 
     steps:
     - name: Checkout repository
@@ -37,34 +37,7 @@ jobs:
     - name: Login to Expo
       run: npx expo login -u ${{ secrets.EXPO_USERNAME }} -p ${{ secrets.EXPO_PASSWORD }}
 
-    - name: Build the app (Android)
-      run: eas build --platform android --non-interactive
-      env:
-        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-    - name: Build the app (iOS)
-      run: eas build --platform ios --non-interactive
-      env:
-        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: expo-app
-        path: dist/*
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Download artifacts
-      uses: actions/download-artifact@v2
-      with:
-        name: expo-app
-        path: dist
-
     - name: Publish to Expo
-      run: eas update --branch deployment_0602_branch --message "Update"
+      run: eas update --branch main --message "CI/CD update from GitHub Actions" --non-interactive
       env:
         EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
