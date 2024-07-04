@@ -1,10 +1,10 @@
-// Home.test.js
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import Home from '../Home';
 import fetchMock from 'jest-fetch-mock';
 import { useNavigation } from '@react-navigation/native';
-import { getFirestore, collection, getDocs, query, orderBy, limit, startAfter } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, query, orderBy, limit, startAfter, getDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth'
 
 
 fetchMock.enableMocks();
@@ -15,6 +15,10 @@ jest.mock('@react-navigation/native', () => ({
 
 jest.mock('firebase/firestore');
 
+jest.mock('firebase/auth');
+
+const mockCurrentUser = { uid: 'test-uid' };
+
 const mockNavigation = { navigate: jest.fn() };
 
 describe('Home', () => {
@@ -23,12 +27,18 @@ describe('Home', () => {
         jest.resetAllMocks();
         fetchMock.resetMocks();
         useNavigation.mockReturnValue(mockNavigation);
-
         getFirestore.mockReturnValue({});
         collection.mockReturnValue({});
         orderBy.mockReturnValue({});
         limit.mockReturnValue({});
         startAfter.mockReturnValue({});
+        getAuth.mockReturnValue({
+            currentUser: mockCurrentUser,
+          });
+        getDoc.mockResolvedValue({
+            exists: () => true,
+            data: () => '',
+        });
         getDocs.mockResolvedValue({
             docs: [
             {
