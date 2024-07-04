@@ -53,7 +53,7 @@ describe('Search Component', () => {
     const { findAllByText } = render(<Search />);
 
     const titles = await waitFor(() => findAllByText(/Title/));
-    expect(titles).toHaveLength(4);
+    expect(titles).toHaveLength(10);
   });
 
   it('Refreshes the Posts', async () => {
@@ -64,9 +64,9 @@ describe('Search Component', () => {
     fireEvent(getByTestId('flatlist'), 'onRefresh');
 
     const titles = await waitFor(() => findAllByText(/Title/));
-    expect(titles).toHaveLength(4);
+    expect(titles).toHaveLength(10);
 
-    mockPostIds.slice(0, 4).forEach(postId => {
+    mockPostIds.slice(0, 10).forEach(postId => {
       expect(titles.find(title => title.props.children === `Title ${postId}`)).toBeTruthy();
     });
   });
