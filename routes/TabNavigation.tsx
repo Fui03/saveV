@@ -17,6 +17,7 @@ import { Feather } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { MaterialIcons } from '@expo/vector-icons';
+import CustomHeader from "./CustomHeader";
 
 export default function TabNavigation() {
     const Tab = createBottomTabNavigator();
