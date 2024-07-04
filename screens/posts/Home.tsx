@@ -122,9 +122,6 @@ const Home = () => {
         ...doc.data()
         })) as Post[];
 
-        // console.log('Fetched Posts:', postsData);
-
-
         postsData.sort(() => Math.random() - Math.random());
 
         if (documentSnapshots.docs.length > 0) {
@@ -146,10 +143,6 @@ const Home = () => {
 
         setLoading(false);
     };
-
-    // useEffect(() => {
-    //     fetchPosts();
-    // }, []);
 
     const handleLoadMore = () => {
         if (!loading && lastVisible) {
