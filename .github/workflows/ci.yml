@@ -37,6 +37,9 @@ jobs:
     - name: Login to Expo
       run: npx expo login -u ${{ secrets.EXPO_USERNAME }} -p ${{ secrets.EXPO_PASSWORD }}
 
+    - name: Run Tests
+      run: npm test
+
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
