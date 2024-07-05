@@ -3,7 +3,7 @@ import { SafeAreaView, Text, StyleSheet , Button, Alert, TouchableOpacity, Image
 import { getAuth } from "firebase/auth";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RouteProp, useNavigation, useRoute} from "@react-navigation/native";
-import { collection, doc, getDocs, getFirestore, limit, onSnapshot, orderBy, query, setDoc, startAfter, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, getFirestore, limit, onSnapshot, orderBy, query, setDoc, startAfter, where } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref , uploadBytesResumable } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -18,9 +18,9 @@ type Post = {
 };
 
 type UserData = {
-    userName: string,
-    profilePic: string,
-    posts: Post
+  userName: string,
+  profilePic: string,
+  posts: Post
 }
 
 type UserProfileRouteParams = {
@@ -33,21 +33,38 @@ type UserProfileRouteProp = RouteProp<{UserProfile: UserProfileRouteParams}, "Us
 const UserProfile = () => {
 
     const route = useRoute<UserProfileRouteProp>();
-    const { userData , userId} = route.params;
+    const { userId } = route.params;
 
 
     const [posts, setPosts] = useState<Post[]>([]);
     const [lastDoc, setLastDoc] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [userName, setUserName] = useState<string>('');
+    const [profilePic, setProfilePic] = useState<string>('');
+
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
     const auth = getAuth();
     const user = auth.currentUser;
     const db = getFirestore();
 
     useEffect(() => {
-        fetchPosts(userId)
+      fetchPosts(userId)
+      fetchUserData();
     }, [])
+
+    const fetchUserData = async () => {
+      setLoading(true);
+
+      const userDoc = await getDoc(doc(db, `users/${userId}`));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserName(userData.userName);
+        setProfilePic(userData?.profilePic);
+      }
+
+      setLoading(false);
+    }
 
     const fetchPosts = async (userUid: string, startAfterDoc: any = null) => {
         if (loadingMore) return;
@@ -92,7 +109,7 @@ const UserProfile = () => {
   };
 
   const handleMessage = () => {
-    navigation.navigate('Chat', {userId: userId, userName: userData.userName})
+    navigation.navigate('Chat', { userId: userId })
   }
 
   const renderPostItem = ({ item }: { item: Post }) => (
@@ -107,14 +124,14 @@ const UserProfile = () => {
     <SafeAreaView style={styles.overall}>
       <View style={styles.header}>
         <View>
-            {userData.profilePic ? 
-                <Image source={{uri: userData.profilePic}} style={styles.profilePic}/>
+            {profilePic ? 
+                <Image source={{uri: profilePic}} style={styles.profilePic}/>
                 :
                 <Image source={{uri: 'https://firebasestorage.googleapis.com/v0/b/savev-3a33f.appspot.com/o/profilePictures%2Fdefault.jpg?alt=media&token=d49600fc-9923-4912-84e9-4d89929eed44'}} style={styles.profilePic} />
             }
         </View>
         <View style={styles.headerRight}>
-            <Text style={styles.userName}>{userData.userName}</Text>
+            <Text style={styles.userName}>{userName}</Text>
             <Pressable style={styles.button} onPress={handleMessage}>
               <Text style={styles.buttonText}>Send Message</Text>
             </Pressable>

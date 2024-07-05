@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, TextInput, FlatList, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView, TextInput, FlatList, TouchableOpacity, Text, View, StyleSheet, Image } from 'react-native';
 import { getFirestore, collection, query, where, getDocs, doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,6 +10,8 @@ type ChatRoom = {
   participants: string[];
   lastMessage: string;
   lastMessageTime: any;
+  otherParticipantName?: string;
+  otherParticipantPic?: string;
 };
 
 const ChatList = () => {
@@ -27,13 +29,39 @@ const ChatList = () => {
       const chatRoomsRef = collection(db, 'chatRooms');
       const chatRoomsQuery = query(chatRoomsRef, where('participants', 'array-contains', user.uid));
 
-      const unsubscribe = onSnapshot(chatRoomsQuery, (querySnapshot) => {
+      const unsubscribe = onSnapshot(chatRoomsQuery, async (querySnapshot) => {
         const chatRoomsData: ChatRoom[] = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         })) as ChatRoom[];
 
-        setChatRooms(chatRoomsData);
+        const chatRoomsWithUserData = await Promise.all(chatRoomsData.map(async (chatRoom) => {
+          const otherParticipant = chatRoom.participants.find(participant => participant !== user.uid);
+          if (otherParticipant) {
+            const userDoc = await getDoc(doc(db, 'users', otherParticipant));
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              return {
+                ...chatRoom,
+                otherParticipantName: userData?.userName,
+                otherParticipantPic: userData?.profilePic,
+              };
+            }
+          } else {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              return {
+                ...chatRoom,
+                otherParticipantName: userData?.userName,
+                otherParticipantPic: userData?.profilePic,
+              };
+            }
+          }
+          return chatRoom;
+        }));
+
+        setChatRooms(chatRoomsWithUserData);
         setLoading(false);
       });
 
@@ -52,21 +80,22 @@ const ChatList = () => {
 
   const renderChatRoomItem = ({ item }: { item: ChatRoom }) => (
     <TouchableOpacity style={styles.chatRoomItem} onPress={() => handleChatRoomPress(item)}>
-      <Text style={styles.chatRoomText}>{item.lastMessage}</Text>
-      <Text style={styles.chatRoomText}>{item.lastMessageTime?.toDate().toLocaleString()}</Text>
+      {item.otherParticipantPic ? (
+        <Image source={{ uri: item.otherParticipantPic }} style={styles.profilePic} />
+      ): 
+        <Image source={{ uri: 'https://firebasestorage.googleapis.com/v0/b/savev-3a33f.appspot.com/o/profilePictures%2Fdefault.jpg?alt=media&token=d49600fc-9923-4912-84e9-4d89929eed44' }} style={styles.profilePic} />
+      }
+      <View style={styles.chatRoomTextContainer}>
+        <Text style={styles.chatRoomText}>{item.otherParticipantName}</Text>
+        <Text style={styles.chatRoomMessage}>{item.lastMessage}</Text>
+        <Text style={styles.chatRoomTime}>{item.lastMessageTime?.toDate().toLocaleString()}</Text>
+      </View>
     </TouchableOpacity>
   );
 
   const handleSearch = async () => {
     try {
-        const userRef =  doc(db, `users/${searchQuery}`);
-        const fetchUserData =  onSnapshot(userRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const userData = snapshot.data();
-                navigation.navigate('UserProfile', {userId: searchQuery, userData});
-            }
-        })
-        return () => fetchUserData();
+      navigation.navigate('UserProfile', {userId: searchQuery});
     } catch (e) {
         console.error(e)
     }
@@ -80,6 +109,7 @@ const ChatList = () => {
         onChangeText={setSearchQuery}
         onSubmitEditing={handleSearch}
         style={styles.searchBar}
+        placeholderTextColor={'gray'}
       />
       <FlatList
         data={chatRooms}
@@ -94,12 +124,12 @@ const ChatList = () => {
 
 const styles = StyleSheet.create({
     searchBar: {
-        borderWidth:1,
-        borderRadius:10,
-        marginVertical:10,
-        height:40,
-        marginHorizontal:10,
-        paddingHorizontal:10
+      borderWidth:1,
+      borderRadius:10,
+      marginVertical:10,
+      height:40,
+      marginHorizontal:10,
+      paddingHorizontal:10
     },
     userItem: {
       padding: 15,
@@ -117,8 +147,29 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between',
     },
+    chatRoomTextContainer: {
+      flex: 1,
+      justifyContent:'center',
+      maxHeight:60,
+    },
     chatRoomText: {
       fontSize: 16,
+      fontWeight: 'bold',
+    },
+    chatRoomMessage: {
+      fontSize: 14,
+      color: '#666',
+    },
+    chatRoomTime: {
+      fontSize: 12,
+      color: '#aaa',
+      marginTop: 5,
+    },
+    profilePic: {
+      width: 70,
+      height: 70,
+      borderRadius: 100,
+      marginRight: 10,
     },
 })
 

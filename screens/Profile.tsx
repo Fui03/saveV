@@ -99,8 +99,6 @@ const Profile = () => {
   };
 
   const handleUpgrade = async () => {
-    const auth = getAuth();
-        const user = auth.currentUser;
 
         if (user) {
 
@@ -187,6 +185,7 @@ const Profile = () => {
         </TouchableOpacity>
         <View style={styles.headerRight}>
           <Text style={styles.userName}>{userName}</Text>
+          <Text style={styles.userId}>{user?.uid}</Text>
           {role == 'normal' ?
             <Pressable style={styles.button} onPress={handleUpgrade}>
               <Text style={styles.buttonText}>Upgrade Business</Text>
@@ -239,6 +238,10 @@ const styles = StyleSheet.create({
     marginVertical:30,
     borderRadius:20
   },
+  userId:{
+    fontSize:10,
+    marginVertical:10,
+  },
   headerRight: {
     justifyContent:'center',
     alignItems:'center',
@@ -272,7 +275,6 @@ const styles = StyleSheet.create({
     borderWidth:1,
     borderColor:'#dcf0fa',
     backgroundColor:'black',
-    width:150
   },
   buttonText: {
     fontSize: 16,

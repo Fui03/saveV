@@ -90,7 +90,7 @@ export default function authStack() {
                     <Stack.Screen 
                         name="Chat" 
                         component={Chat}
-                        options={{headerShown: true, title: "Profile", headerBackTitle: "Home"}}/>
+                        options={{headerShown: false, title: "Profile", headerBackTitle: "Home"}}/>
                         
                 </Stack.Navigator>
             </NavigationContainer>

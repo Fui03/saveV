@@ -1,10 +1,12 @@
 import React, {useEffect, useRef, useState} from 'react';
-import { FlatList, Text, View, TextInput, Button, StyleSheet, Keyboard, Alert } from 'react-native';
+import { FlatList, Text, View, TextInput, Button, StyleSheet, Keyboard, Alert, KeyboardAvoidingView, Platform, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { getAuth } from 'firebase/auth';
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, getFirestore, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter, updateDoc, where } from 'firebase/firestore';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { RouteProp, useRoute } from '@react-navigation/native';
-import { format , formatInTimeZone } from 'date-fns-tz';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { formatInTimeZone } from 'date-fns-tz';
+import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 
 type UserProfileRouteParams = {
@@ -25,8 +27,10 @@ type Message = {
 
 const Chat = () => {
 
+  const navigation = useNavigation<NativeStackNavigationProp<any>>();
+
     const route = useRoute<UserProfileRouteProp>();
-    const { userId, userName} = route.params;
+    const { userId } = route.params;
 
     const [currentUserName, setCurrentUserName] = useState<string>('')
     const [text, setText] = useState('');
@@ -36,6 +40,8 @@ const Chat = () => {
     const [lastFetchedTimestamp, setLastFetchedTimestamp] = useState<any>(null);
     const [loadingMore, setLoadingMore] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [userName, setUserName] = useState<string>('');
+    const [profilePic, setProfilePic] = useState<string>('');
 
     const auth = getAuth();
     const user = auth.currentUser;
@@ -148,6 +154,10 @@ const Chat = () => {
 
     },[])
 
+    useEffect(() => {
+      fetchUserData();
+    },[])
+
     const fetchMoreMessages = async () => {
       console.log(1)
       if (!chatRoomId || !lastVisible || loadingMore || loading) return;
@@ -173,9 +183,8 @@ const Chat = () => {
       setMessages((prevMessages) => [...prevMessages, ...newMessages]);
       setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
       setLoadingMore(false);
-      };
+    };
 
-      
     const handleSend = async () => {
         if (!chatRoomId || !user || !text.trim()) return;
     
@@ -209,46 +218,111 @@ const Chat = () => {
         Keyboard.dismiss();      
     };
 
+    const fetchUserData = async () => {
+      setLoading(true);
+
+      const userDoc = await getDoc(doc(db, `users/${userId}`));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserName(userData.userName);
+        setProfilePic(userData?.profilePic);
+      }
+
+      setLoading(false);
+    }
+
     return (
+      <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
         <SafeAreaView style={styles.container}>
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            
-            <View style={item.senderId === user?.uid ? styles.sender : styles.receiver}>
-              <Text>{item.senderName}: {item.text}</Text>
-              <Text>{formatInTimeZone(new Date(item.createdAt?.toDate()), 'Asia/Singapore', 'd/M/yyyy, p')}</Text>
-            </View>
-          )}
-          inverted
-          onEndReached={fetchMoreMessages}
-          onEndReachedThreshold={0}
-          initialNumToRender={15}
-        />
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder="Type your message"
-          style={styles.input}
-        />
-        <Button title="Send" onPress={handleSend} />
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color="black"/>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => navigation.navigate('UserProfile', {userId})}>
+              {profilePic ? (
+                <Image source={{ uri: profilePic }} style={styles.profilePic} />
+              ): 
+                <Image source={{ uri: 'https://firebasestorage.googleapis.com/v0/b/savev-3a33f.appspot.com/o/profilePictures%2Fdefault.jpg?alt=media&token=d49600fc-9923-4912-84e9-4d89929eed44' }} style={styles.profilePic} />
+              }
+            </TouchableOpacity>
+            <Text style={styles.name}>{userName}</Text>
+          </View>
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              
+              <View style={item.senderId === user?.uid ? styles.sender : styles.receiver}>
+                <Text style={styles.text}>{item.text}</Text>
+                <Text style={styles.date}>{formatInTimeZone(new Date(item.createdAt?.toDate()), 'Asia/Singapore', 'd/M/yyyy, p')}</Text>
+              </View>
+            )}
+            inverted
+            onEndReached={fetchMoreMessages}
+            onEndReachedThreshold={0}
+            style={styles.flatList}
+          />
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder="Type your message"
+            style={styles.input}
+            multiline
+            placeholderTextColor={'gray'}
+          />
+          <TouchableOpacity onPress={handleSend}>
+            <MaterialCommunityIcons name="send" size={24} color="black" style={styles.send}/>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
+    </KeyboardAvoidingView>
     );
-};
+  };
 
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      padding: 10,
+      // justifyContent:'center',
+      backgroundColor: 'white',
+      // // alignItems:'flex-start'
+    },
+    header: {
+      // top: 10,
+      flexDirection:'row',
+      // justifyContent:'center',
+      alignItems:'center',
+      height:70,
+      padding:10,
+      backgroundColor:'white'
+    },
+    profilePic: {
+      width: 45,
+      height: 45,
+      borderRadius: 100,
+      marginRight: 10,
+      marginHorizontal:10,
+    },
+    name: {
+      fontSize:16,
+      fontWeight:'bold',
+      marginHorizontal:5,
     },
     input: {
       borderWidth: 1,
       borderColor: '#ccc',
       padding: 10,
       borderRadius: 5,
-      marginVertical: 10,
+      marginTop: 10,
+      width:'80%',
+      marginLeft:20,
+      maxHeight:120
     },
     sender: {
       alignSelf: 'flex-end',
@@ -266,5 +340,34 @@ const styles = StyleSheet.create({
       marginVertical: 5,
       maxWidth:'70%'
     },
+    text: {
+      marginBottom:10
+    },
+    date: {
+      color:'#D3D3D3'
+    },
+    flatList: {
+      // paddingTop:0,
+      // borderWidth:1,
+      padding:10,
+      backgroundColor:'#f5f6fa'
+    },
+    inputContainer: {
+      flexDirection:'row',
+      // justifyContent:'space-between',
+      alignItems:'center',
+      // position: 'absolute',
+      bottom: 0,
+      width:'100%',
+      // backgroundColor: '#fff',
+      // borderTopWidth: 1,
+      // borderColor: '#ccc',
+    },
+    send: {
+      marginLeft:10,
+      padding: 10,
+      marginTop: 5,
+    }
+
   });
 export default Chat;
