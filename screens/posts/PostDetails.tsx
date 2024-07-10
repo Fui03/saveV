@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { SafeAreaView, Pressable ,Text, StyleSheet, Image, View, Button, TextInput, ScrollView, FlatList, Dimensions, KeyboardAvoidingView, Alert, ListRenderItem, ListRenderItemInfo, Platform} from 'react-native';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import { SafeAreaView, Pressable ,Text, StyleSheet, Image, View, Button, TextInput, ScrollView, FlatList, Dimensions, KeyboardAvoidingView, Alert, ListRenderItem, ListRenderItemInfo, Platform, TouchableOpacity} from 'react-native';
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
 import { addDoc, collection, doc, getFirestore, onSnapshot, updateDoc, getDocs, query, where, setDoc, deleteDoc, getDoc, orderBy, increment } from 'firebase/firestore';
 import Swiper from 'react-native-swiper';
@@ -9,10 +9,12 @@ import { FontAwesome } from '@expo/vector-icons';
 import { HandlerStateChangeEvent, TapGestureHandler} from 'react-native-gesture-handler';  
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { Entypo } from '@expo/vector-icons';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
   
   type Post = {
     id: string;
+    userId: string,
     title: string;
     caption: string;
     spendingRange: number;
@@ -23,6 +25,7 @@ import { Entypo } from '@expo/vector-icons';
 
   type Comments = {
     id: string,
+    userId: string,
     userName: string,
     comment: string,
     likes: number,
@@ -32,6 +35,7 @@ import { Entypo } from '@expo/vector-icons';
 
   type Reply = {
     id: string,
+    userId: string,
     userName: string,
     comment: string,
     likes: number,
@@ -46,6 +50,7 @@ import { Entypo } from '@expo/vector-icons';
 
   export default function PostDetails() {
 
+    const navigation = useNavigation<NativeStackNavigationProp<any>>();
     const route = useRoute<PostDetailsRouteProp>();
     const { post } = route.params;
 
@@ -54,6 +59,8 @@ import { Entypo } from '@expo/vector-icons';
     const [comment, setComment] = useState<string>('');
     const [comments, setComments] = useState<Comments[]>([]);
     const [userName, setUserName] = useState<string | undefined>();
+    const [ownerUserName, setOwnerUserName] = useState<string | undefined>();
+    const [userProfilePic, setUserProfilePic] = useState<string | undefined>();
     const [saved, setSaved] = useState<boolean>(false);
 
     const [replies, setReplies] = useState<{[ket: string]: Reply[]}>({});
@@ -87,6 +94,7 @@ import { Entypo } from '@expo/vector-icons';
           const commentId = doc.id;
           commentsData.push({
             id: commentId,
+            userId: data.userId,
             comment: data.comment,
             userName: data.userName,
             likes: data.likes || 0,
@@ -111,8 +119,6 @@ import { Entypo } from '@expo/vector-icons';
     
       return () => unsubscribe();
     }, [post.id, user]);
-    
-
 
     //Post likes
     useEffect(() => {
@@ -168,9 +174,17 @@ import { Entypo } from '@expo/vector-icons';
       unsubscribe();
     },[post.id, user])
 
-    
+    useEffect(() => {
+      const fetchPostData = async () => {
+        const userData = await getDoc(doc(db, `users/${post.userId}`));
+        if (userData.exists()) {
+          setUserProfilePic(userData.data()?.profilePic);
+          setOwnerUserName(userData.data().userName);
+        }        
+      }
 
-   
+      fetchPostData();
+    })
 
     const handleLike = useCallback(
       async () => {
@@ -392,6 +406,7 @@ import { Entypo } from '@expo/vector-icons';
           const replyId = doc.id;
           repliesData.push({
             id: replyId,
+            userId: data.userId,
             comment: data.comment,
             userName: data.userName,
             likes: data.likes || 0,
@@ -461,7 +476,18 @@ import { Entypo } from '@expo/vector-icons';
                   </Animated.View>
                 </TapGestureHandler>
               </TapGestureHandler>
-              <Text style={styles.title}>{post.title}</Text>
+              <View style={styles.titleContainer}>
+                <TouchableOpacity onPress={() => navigation.navigate('UserProfile', { userId: post.userId })}>
+                  {userProfilePic 
+                    ? 
+                    <Image source={{uri: userProfilePic}} style={styles.profilePic}/>
+                    :
+                    <Image source={{uri: 'https://firebasestorage.googleapis.com/v0/b/savev-3a33f.appspot.com/o/profilePictures%2Fdefault.jpg?alt=media&token=d49600fc-9923-4912-84e9-4d89929eed44'}} style={styles.profilePic} />
+                  }
+                </TouchableOpacity>
+                <Text style={styles.userName}>{ownerUserName}</Text>
+              </View>
+                <Text style={styles.title}>{post.title}</Text>
               <Text style={styles.caption}>{post.caption}</Text>
           </View>
           <View style={styles.bottomContentContainer}>
@@ -486,7 +512,9 @@ import { Entypo } from '@expo/vector-icons';
         return (
           
           <View style={styles.commentContainer}>
-            <Text style={styles.commentName}>{item.userName}</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('UserProfile', {userId: item.userId})}>
+              <Text style={styles.commentName}>{item.userName}</Text>
+            </TouchableOpacity>
             <View style={styles.commentLikeContainer}>
               <View style={{width:'85%'}}>
                 <Text style={styles.comment}>{item.comment}</Text>
@@ -628,6 +656,10 @@ import { Entypo } from '@expo/vector-icons';
       flex: 1,
       backgroundColor: '#f5f6fa',
     },
+    titleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
     scrollContainer: {
       paddingBottom: 20,
     },
@@ -642,7 +674,8 @@ import { Entypo } from '@expo/vector-icons';
       paddingTop: 10
     },
     photoContainer: {
-      height: 500,
+      // borderWidth:1,
+      height: 450,
       // borderWidth:1,
       color: '#f5f6fa',
     },
@@ -716,6 +749,7 @@ import { Entypo } from '@expo/vector-icons';
     },
     title: {
       paddingLeft: 5,
+      // borderWidth:1,
       fontSize: 28,
       fontWeight: 'bold',
       marginVertical: 10,
@@ -823,5 +857,17 @@ import { Entypo } from '@expo/vector-icons';
       position: 'absolute',
       zIndex: 1,
     },
+    profilePic: {
+      width:50,
+      height:50,
+      borderRadius:1200,
+      // borderColor: 'black',
+      // borderWidth: 2,
+      marginHorizontal:10
+    },
+    userName: {
+      fontSize:17,
+      // fontWeight:'bold'
+    }
   });
 
