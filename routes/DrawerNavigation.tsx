@@ -11,18 +11,26 @@ import ResetPassword from "@/screens/setting/ResetPassword";
 import ResetEmail from "@/screens/setting/ResetEmail";
 import UpdateProfile from "@/screens/setting/UpdateProfile";
 import PreferenceManagement from "@/screens/setting/PreferenceManagement";
+import CustomHeader from "./CustomHeader";
 
+type RootParamList = {
+    TabNavigation: undefined;
+    ResetPassword: undefined;
+    ResetEmail: undefined;
+    UpdateProfile: undefined;
+    PreferenceManagement: undefined;
+    ChatList: undefined;
+};
+  
 
+const Drawer = createDrawerNavigator<RootParamList>();
 
-const Drawer = createDrawerNavigator();
-
-export default function DrawerNavigation() {
-
-    const navigation = useNavigation<NativeStackNavigationProp<any>>();
-   
+export default function DrawerNavigation() {   
 
     return(
-        <Drawer.Navigator drawerContent={(props) => <CustomDrawerContent{...props}/>}>
+        <>
+        <CustomHeader/>
+        <Drawer.Navigator drawerContent={(props) => <CustomDrawerContent{...props}/>} screenOptions={{headerShown:false}}>
             <Drawer.Screen
                     name = "TabNavigation"
                     component={TabNavigation}
@@ -44,6 +52,7 @@ export default function DrawerNavigation() {
                 component={PreferenceManagement}
                 options={{title:"Preference Management"}}/>
         </Drawer.Navigator>
+        </>
     );
 }
 

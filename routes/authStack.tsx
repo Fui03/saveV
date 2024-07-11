@@ -15,6 +15,9 @@ import PostDetails from "@/screens/posts/PostDetails";
 import PaymentScreen from "@/screens/posts/PaymentScreen";
 import PdfReceipt from "@/screens/posts/PdfReceipt";
 import Search from "@/screens/posts/Search";
+import ChatList from "@/screens/chat/ChatList";
+import UserProfile from "@/screens/UserProfile";
+import Chat from "@/screens/chat/Chat";
 
 export default function authStack() {
     const Stack = createNativeStackNavigator();
@@ -76,6 +79,19 @@ export default function authStack() {
                         name="Search" 
                         component={Search}
                         options={{headerShown: true, title: "Home", headerBackTitle: "Home"}}/>
+                    <Stack.Screen 
+                        name="ChatList" 
+                        component={ChatList}
+                        options={{headerShown: true, title: "Chat", headerBackTitle: "Home"}}/>
+                    <Stack.Screen 
+                        name="UserProfile" 
+                        component={UserProfile}
+                        options={{headerShown: true, title: "Profile", headerBackTitle: "Home"}}/>
+                    <Stack.Screen 
+                        name="Chat" 
+                        component={Chat}
+                        options={{headerShown: false, title: "Profile", headerBackTitle: "Home"}}/>
+                        
                 </Stack.Navigator>
             </NavigationContainer>
     );
