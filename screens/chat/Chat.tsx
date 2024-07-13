@@ -10,20 +10,20 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 
 type UserProfileRouteParams = {
-    userId: string,
-    userName: string
+  userId: string,
+  userName: string
 }
 
 type UserProfileRouteProp = RouteProp<{UserProfile: UserProfileRouteParams}, "UserProfile">;
 
 type Message = {
-    id: string;
-    text: string;
-    createdAt: any;
-    senderId: string;
-    senderName: string;
-    receiverId: string;
-  };
+  id: string;
+  text: string;
+  createdAt: any;
+  senderId: string;
+  senderName: string;
+  receiverId: string;
+};
 
 const Chat = () => {
 
@@ -158,6 +158,36 @@ const Chat = () => {
       fetchUserData();
     },[])
 
+    async function sendPushNotification(expoPushToken: string, msg: string) {
+      const message = {
+        to: expoPushToken,
+        sound: 'default',
+        title: currentUserName,
+        body: msg,
+        data: { someData: msg },
+      };
+    
+      try {
+        const response = await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Accept-encoding': 'gzip, deflate',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(message),
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to send notification');
+        }
+    
+        console.log('Notification sent successfully');
+      } catch (error) {
+        console.error('Error sending notification:', error);
+      }
+    }
+    
     const fetchMoreMessages = async () => {
       console.log(1)
       if (!chatRoomId || !lastVisible || loadingMore || loading) return;
@@ -209,11 +239,21 @@ const Chat = () => {
             lastMessageTime: new Date(),
           }, { merge: true });
 
-          await setDoc(doc(db, 'users', userId, 'userChats', chatRoomId), {
-            lastMessage: text,
-            lastMessageTime: new Date(),
-          }, { merge: true });
+        await setDoc(doc(db, 'users', userId, 'userChats', chatRoomId), {
+          lastMessage: text,
+          lastMessageTime: new Date(),
+        }, { merge: true });
       
+        const userDoc = await getDoc(doc(db, `users/${userId}`));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const recipientToken = userData.expoPushToken;
+            if (recipientToken) {
+              sendPushNotification(recipientToken, text);
+              console.log(recipientToken)
+            }
+          }
+
         setText('');
         Keyboard.dismiss();      
     };
