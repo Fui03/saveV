@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import { FlatList, Text, View, TextInput, Button, StyleSheet, Keyboard, Alert, KeyboardAvoidingView, Platform, SafeAreaView, TouchableOpacity, Image } from 'react-native';
+import { FlatList, Text, View, TextInput, Button, StyleSheet, Keyboard, Alert, KeyboardAvoidingView, Platform, SafeAreaView, TouchableOpacity, Image , AppState, AppStateStatus} from 'react-native';
 import { getAuth } from 'firebase/auth';
 import { addDoc, arrayUnion, collection, doc, getDoc, getDocs, getFirestore, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter, updateDoc, where } from 'firebase/firestore';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
@@ -10,20 +10,20 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 
 type UserProfileRouteParams = {
-    userId: string,
-    userName: string
+  userId: string,
+  userName: string
 }
 
 type UserProfileRouteProp = RouteProp<{UserProfile: UserProfileRouteParams}, "UserProfile">;
 
 type Message = {
-    id: string;
-    text: string;
-    createdAt: any;
-    senderId: string;
-    senderName: string;
-    receiverId: string;
-  };
+  id: string;
+  text: string;
+  createdAt: any;
+  senderId: string;
+  senderName: string;
+  receiverId: string;
+};
 
 const Chat = () => {
 
@@ -42,7 +42,7 @@ const Chat = () => {
     const [loading, setLoading] = useState(false);
     const [userName, setUserName] = useState<string>('');
     const [profilePic, setProfilePic] = useState<string>('');
-
+    
     const auth = getAuth();
     const user = auth.currentUser;
     const db = getFirestore();
@@ -72,11 +72,13 @@ const Chat = () => {
     
           if (existingChatRoomId) {
             setChatRoomId(existingChatRoomId);
+            setStatus(true, existingChatRoomId);
           } else {
             const newChatRoomRef = await addDoc(chatRoomRef, {
               participants: arrayUnion(user.uid, userId),
             });
             setChatRoomId(newChatRoomRef.id);
+            setStatus(true, newChatRoomRef.id);
           }
         };
     
@@ -158,13 +160,97 @@ const Chat = () => {
       fetchUserData();
     },[])
 
+    const setStatus = async (status: boolean, activeChatRoomId : string | null) => {
+      if (user) {
+          try {
+              const userRef = doc(db, 'users', user.uid);
+              await updateDoc(userRef, {
+                isInChat: status,
+                activeChatRoomId,
+                lastActive: serverTimestamp(),
+              });
+              // console.log(`Status set to ${status}`);
+              // console.log(`chatroomid set to ${activeChatRoomId}`);
+          } catch (error) {
+              console.error('Error updating status:', error);
+          }
+      }
+    };
+
+    useEffect(() => {
+
+      if (!chatRoomId) return;
+      
+      const focusListener = navigation.addListener('focus', () => {
+        setStatus(true, chatRoomId);
+      });
+      
+      const blurListener = navigation.addListener('blur', () => {
+        setStatus(false, null);
+      });
+  
+      return () => {
+        focusListener();
+        blurListener();
+      };
+    }, [user, navigation, db, chatRoomId]);
+
+    useEffect(() => {
+        const handleAppStateChange = (nextAppState: AppStateStatus) => {
+            if (nextAppState === 'background' || nextAppState === 'inactive') {
+                setStatus(false, null);
+            } else if (nextAppState === 'active') {
+              if (chatRoomId) {
+                setStatus(true, chatRoomId); 
+              }
+            }
+        };
+
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+        return () => {
+          subscription.remove();
+        };
+    }, [user, db, chatRoomId]);
+
+    async function sendPushNotification(expoPushToken: string, msg: string) {
+
+      const message = {
+        to: expoPushToken,
+        sound: 'default',
+        title: currentUserName,
+        body: msg,
+        data: { someData: msg },
+      };
+    
+      try {
+        const response = await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Accept-encoding': 'gzip, deflate',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(message),
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to send notification');
+        }
+    
+        // console.log('Notification sent successfully');
+      } catch (error) {
+        console.error('Error sending notification:', error);
+      }
+    }
+    
     const fetchMoreMessages = async () => {
-      console.log(1)
+      // console.log(1)
       if (!chatRoomId || !lastVisible || loadingMore || loading) return;
 
       setLoadingMore(true);
   
-      console.log(1)
+      // console.log(1)
       const messagesRef = collection(db, 'chatRooms', chatRoomId, 'messages');
       const messagesQuery = query(
         messagesRef,
@@ -209,11 +295,28 @@ const Chat = () => {
             lastMessageTime: new Date(),
           }, { merge: true });
 
-          await setDoc(doc(db, 'users', userId, 'userChats', chatRoomId), {
-            lastMessage: text,
-            lastMessageTime: new Date(),
-          }, { merge: true });
+        await setDoc(doc(db, 'users', userId, 'userChats', chatRoomId), {
+          lastMessage: text,
+          lastMessageTime: new Date(),
+        }, { merge: true });
       
+        const userDoc = await getDoc(doc(db, `users/${userId}`));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const recipientToken = userData.expoPushToken;
+            
+            if (userData.isInChat && userData.activeChatRoomId === chatRoomId) {
+              setText('');
+              Keyboard.dismiss();      
+              return;
+            }
+
+            if (recipientToken) {
+              sendPushNotification(recipientToken, text);
+              // console.log(recipientToken)
+            }
+          }
+
         setText('');
         Keyboard.dismiss();      
     };
@@ -238,7 +341,10 @@ const Chat = () => {
       >
         <SafeAreaView style={styles.container}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
+            <TouchableOpacity onPress={() => {
+              navigation.goBack()
+              setStatus(false, null);
+              }}>
               <Ionicons name="arrow-back" size={24} color="black"/>
             </TouchableOpacity>
 
