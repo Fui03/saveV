@@ -5,7 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, setDoc, getFirestore, collection, getDocs, onSnapshot, getDoc } from 'firebase/firestore';
 import app from './firebaseConfig';
 
@@ -24,23 +24,29 @@ Notifications.setNotificationHandler({
 const App = () => {
 
   useEffect(() => {
-
-    const requestPermissions = async () => {
+    const handleUserSignIn = async (user: User) => {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {
         alert('Failed to get push token for push notification!');
         return;
-      } 
+      }
 
       const token = (await Notifications.getExpoPushTokenAsync()).data;
-      console.log(token); 
+      // console.log(token);
 
-      if (auth.currentUser) {
-        setDoc(doc(db, 'users', auth.currentUser.uid), { expoPushToken: token }, { merge: true });
+      if (user) {
+        await setDoc(doc(db, 'users', user.uid), { expoPushToken: token }, { merge: true });
       }
     };
-    requestPermissions();
-  }, []);
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        handleUserSignIn(user);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [auth, db]);
   
 
   return (
