@@ -383,7 +383,7 @@ const Chat = () => {
             multiline
             placeholderTextColor={'gray'}
           />
-          <TouchableOpacity onPress={handleSend}>
+          <TouchableOpacity onPress={handleSend} testID='send'>
             <MaterialCommunityIcons name="send" size={24} color="black" style={styles.send}/>
           </TouchableOpacity>
         </View>

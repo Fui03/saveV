@@ -16,7 +16,7 @@ import PaymentScreen from "@/screens/posts/PaymentScreen";
 import PdfReceipt from "@/screens/posts/PdfReceipt";
 import Search from "@/screens/posts/Search";
 import ChatList from "@/screens/chat/ChatList";
-import UserProfile from "@/screens/UserProfile";
+import UserProfile from "@/screens/profile/UserProfile";
 import Chat from "@/screens/chat/Chat";
 
 export default function authStack() {

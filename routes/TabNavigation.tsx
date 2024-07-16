@@ -5,7 +5,7 @@ import { Button, Pressable, Alert } from 'react-native';
 import Home from "@/screens/posts/Home";
 import Transaction from "@/screens/transaction/Transaction";
 import Statistic from "@/screens/statistic/Statistic";
-import Profile from "@/screens/Profile";
+import Profile from "@/screens/profile/Profile";
 import { getAuth, signOut } from "firebase/auth";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";

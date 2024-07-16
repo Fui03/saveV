@@ -30,6 +30,7 @@ const ChatList = () => {
       const chatRoomsQuery = query(chatRoomsRef, where('participants', 'array-contains', user.uid));
 
       const unsubscribe = onSnapshot(chatRoomsQuery, async (querySnapshot) => {
+        
         const chatRoomsData: ChatRoom[] = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
@@ -79,7 +80,7 @@ const ChatList = () => {
   };
 
   const renderChatRoomItem = ({ item }: { item: ChatRoom }) => (
-    <TouchableOpacity style={styles.chatRoomItem} onPress={() => handleChatRoomPress(item)}>
+    <TouchableOpacity style={styles.chatRoomItem} onPress={() => handleChatRoomPress(item)} testID='user'>
       {item.otherParticipantPic ? (
         <Image source={{ uri: item.otherParticipantPic }} style={styles.profilePic} />
       ): 

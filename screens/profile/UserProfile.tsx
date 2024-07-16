@@ -115,7 +115,7 @@ const UserProfile = () => {
   const renderPostItem = ({ item }: { item: Post }) => (
     <TouchableOpacity style={styles.postContainer} onPress={() => navigation.navigate('PostDetails', { post: item })}>
       {item.imageURLs.length > 0 && (
-        <Image source={{ uri: item.imageURLs[0] }} style={styles.postImage} />
+        <Image source={{ uri: item.imageURLs[0] }} style={styles.postImage} testID={`post-image-${item.id}`}/>
       )}
     </TouchableOpacity>
   );
@@ -125,9 +125,9 @@ const UserProfile = () => {
       <View style={styles.header}>
         <View>
             {profilePic ? 
-                <Image source={{uri: profilePic}} style={styles.profilePic}/>
+                <Image source={{uri: profilePic}} style={styles.profilePic} testID='profile-pic'/>
                 :
-                <Image source={{uri: 'https://firebasestorage.googleapis.com/v0/b/savev-3a33f.appspot.com/o/profilePictures%2Fdefault.jpg?alt=media&token=d49600fc-9923-4912-84e9-4d89929eed44'}} style={styles.profilePic} />
+                <Image source={{uri: 'https://firebasestorage.googleapis.com/v0/b/savev-3a33f.appspot.com/o/profilePictures%2Fdefault.jpg?alt=media&token=d49600fc-9923-4912-84e9-4d89929eed44'}} style={styles.profilePic} testID='profile-pic'/>
             }
         </View>
         <View style={styles.headerRight}>
