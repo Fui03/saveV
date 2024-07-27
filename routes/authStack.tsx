@@ -18,6 +18,7 @@ import Search from "@/screens/posts/Search";
 import ChatList from "@/screens/chat/ChatList";
 import UserProfile from "@/screens/profile/UserProfile";
 import Chat from "@/screens/chat/Chat";
+import OnBoarding from "@/screens/authentication/onBoarding";
 
 export default function authStack() {
     const Stack = createNativeStackNavigator();
@@ -35,7 +36,6 @@ export default function authStack() {
                     <Stack.Screen
                         name = "DrawerNavigation"
                         component={DrawerNavigation}/>
-
                     <Stack.Screen
                         name = "LoginPhoneNumber"
                         component={LoginPhoneNumber}/>
@@ -91,7 +91,10 @@ export default function authStack() {
                         name="Chat" 
                         component={Chat}
                         options={{headerShown: false, title: "Profile", headerBackTitle: "Home"}}/>
-                        
+                    <Stack.Screen 
+                        name="OnBoarding" 
+                        component={OnBoarding}
+                        options={{headerShown: false, title: "Profile", headerBackTitle: "Home"}}/>
                 </Stack.Navigator>
             </NavigationContainer>
     );
