@@ -12,7 +12,8 @@ import {
   KeyboardAvoidingView,
   Modal,
   Image,
-  Platform
+  Platform,
+  ActivityIndicator
 } from "react-native";
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -35,7 +36,7 @@ import app from "../../firebaseConfig";
 
 import PhoneInput from "react-native-phone-input";
 import CountryPicker from "react-native-country-picker-modal";
-import { collection, doc, getFirestore, setDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
 
 // import db from "@react-native-firebase/database";
 
@@ -49,7 +50,7 @@ export default function Register() {
   >();
   const [modalVisibility, setModalVisibility] = useState<boolean>(false);
   const [Recaptcha, setRecaptcha] = useState<ApplicationVerifier>();
-
+  const [loading, setLoading] = useState<boolean>(false);
   // const selectCountry
 
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -66,8 +67,10 @@ export default function Register() {
   };
 
   const handleSignUp = async () => {
+    
     if (email && password && confirmPassword) {
       try {
+        setLoading(true);
         if (!samePassword(password, confirmPassword)) {
           Alert.alert("Error", "Password and Confirm Password do not match!");
           return;
@@ -91,7 +94,6 @@ export default function Register() {
           password
         );
 
-        // console.log()
         // const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         //   'size': 'invisible',
         //   'callback': () => {}
@@ -109,7 +111,10 @@ export default function Register() {
           await updateProfile(response.user, { displayName: userName });
           // linkWithPhoneNumber(response.user, phoneNumber, recaptchaVerifier);
           // linkWithPhoneNumber()
+          setLoading(false);
         }
+        
+        setLoading(false);
       } catch (e) {
         let err = "Try Again";
         if (e instanceof Error && e.message) {
@@ -132,13 +137,12 @@ export default function Register() {
           }
         }
         Alert.alert("Error", err);
+        setLoading(false);
       }
     }
   };
 
   const createUser = async (response: UserCredential) => {
-    // const database = getDatabase();
-    // set(ref(database, `users/${response.user.uid}`), {userName, phoneNumber});
     const db = getFirestore();
     const documents = doc(db, `users`, response.user.uid);
     await setDoc(documents, {
@@ -166,14 +170,17 @@ export default function Register() {
     const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
-      user.reload().then(() => {
+      user.reload().then(async () => {
         if (user.emailVerified) {
           Alert.alert("Email verified!", "You may proceed!");
           setModalVisibility(false);
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "DrawerNavigation" }],
-          });
+          const db = getFirestore(app);
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (!userDoc.exists() || !userDoc.data()?.hasCompletedOnboarding) {
+            navigation.replace('OnBoarding');
+          } else {
+            navigation.replace('DrawerNavigation');
+          }
         }
       });
     }
@@ -276,12 +283,16 @@ export default function Register() {
               secureTextEntry
             />
 
-            <Button
-              title="Sign Up"
-              testID="signup"
-              onPress={handleSignUp}
-              color="#3897f0"
-            />
+            {loading ?
+              <ActivityIndicator size="large" color="#0000ff" />
+              : 
+              <Button
+                title="Sign Up"
+                testID="signup"
+                onPress={handleSignUp}
+                color="#3897f0"
+              />
+            }
 
             <Text style={styles.navigateTitle}>Already Have an account?</Text>
             <Text

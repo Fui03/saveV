@@ -16,11 +16,12 @@ import {
     KeyboardAvoidingView,
     Platform
 } from 'react-native';
-
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 import { getAuth, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth';
 import app from '../../firebaseConfig';
+import { doc, getDoc, getFirestore } from "firebase/firestore";
+
 
 export default function Login() {
     const [email, setEmail] = useState<string | undefined>();
@@ -38,12 +39,16 @@ export default function Login() {
                 const response = await signInWithEmailAndPassword(auth, email, password);
 
                 if (response.user && response.user.emailVerified) {
-                    
+                    const db = getFirestore(app);
+                    const userDoc = await getDoc(doc(db, 'users', response.user.uid));
+                    if (!userDoc.exists() || !userDoc.data()?.hasCompletedOnboarding) {
+                        navigation.replace('OnBoarding')
+                    } else {
+                        navigation.replace('DrawerNavigation');
+                    }
                     setLoading(false);
-                    navigation.replace('DrawerNavigation');
                 } else {
                     setModalVisibility(true);
-        
                 }
             } catch (e) {
                 setLoading(false);
