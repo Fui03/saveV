@@ -58,16 +58,10 @@ const Home = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   const [posts, setPosts] = useState<Post[]>([]);
-  const [lastVisible, setLastVisible] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [spendingRange, setSpendingRange] = useState<number>(0);
-
   const [search, setSearch] = useState<string>("");
-
-  const spendingDelta = 10;
-
-  const high = spendingRange + spendingDelta;
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -119,106 +113,159 @@ const Home = () => {
       }
     }
   };
-  const fetchPosts = async (lastDoc?: any, spendingPower?: number) => {
-    setLoading(true);
 
-    const db = getFirestore();
-    const postsRef = collection(db, "posts");
+    const fetchPosts = async (spendingPower?: number) => {
+        setLoading(true);
 
-    let q = query(
-      postsRef,
-      where("spendingRange", "<=", spendingPower || 10000),
-      limit(15)
-    );
+        const db = getFirestore();
+        const postsRef = collection(db, "posts");
 
-    if (lastDoc) {
-      q = query(
-        postsRef,
-        where("spendingRange", "<=", spendingPower || 10000),
-        startAfter(lastDoc),
-        limit(10)
-      );
-    }
-
-    const documentSnapshots = await getDocs(q);
-    const postsData: Post[] = documentSnapshots.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Post[];
-
-    if (documentSnapshots.docs.length > 0) {
-      setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
-    }
-
-    // Prepare data for GPT API
-    const gptInput = {
-      userSpendingPower: spendingPower,
-      posts: postsData.map((post) => ({
-        userId: post.id, // Only include necessary data for the model to process
-        spendingRange: post.spendingRange,
-      })),
-    };
-
-    // Call GPT API for recommendations
-    const response = await openai.completions.create({
-        model: "gpt-3.5-turbo-instruct",
-        prompt: `Given the user's spending power level of ${spendingPower}, 
-          prioritize the following posts: ${JSON.stringify(gptInput)},
-          just output the post userIds in order of priority.`,
-        max_tokens: 150,
-      });
-  
-      console.log("OpenAI Response:", response.choices[0].text.trim()); // Log the response to debug
-  
-      // console.log("OpenAI Response:", response.choices[0].text); // Log the response to debug
-  
-      try {
-        // Attempt to parse the response
-        const prioritizedUserIds = response.choices[0].text.trim();
-        const prioritizedPosts = postsData.filter((post) =>
-          prioritizedUserIds.includes(post.id)
+        const q = query(
+        postsRef
         );
-        // Update post list based on recommendations
-        if (lastDoc) {
-          const uniquePosts = [...posts, ...prioritizedPosts].reduce<Post[]>(
-            (unique, o) => {
-              if (!unique.some((obj) => obj.id === o.id)) {
-                unique.push(o);
-              }
-              return unique;
-            },
-            []
-          );
-  
-          setPosts(uniquePosts);
-        } else {
-          setPosts(prioritizedPosts);
+
+        const documentSnapshots = await getDocs(q);
+        const postsData: Post[] = documentSnapshots.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        })) as Post[];
+        
+        // console.log("All Posts length: " + postsData.length)
+        const idsToRemove = new Set(posts.map(post => post.id));
+        const newPostsData = postsData.filter(post => !idsToRemove.has(post.id))
+
+        // console.log("Render Posts length: " + posts.length)
+        // console.log("New Posts length: " + newPostsData.length)
+
+        if (newPostsData.length === 0) {
+            console.log("No new posts to process");
+            setLoading(false);
+            return;
         }
-      } catch (e) {
-        console.error("Failed to parse JSON:", e);
-        // Handle error or fallback
-      }
-  
-      setLoading(false);
-    };
-    const handleLoadMore = () => {
-        if (!loading && lastVisible) {
-          fetchPosts(lastVisible);
-        }
-      };
+        
+        // Prepare data for GPT API
+        const gptInput = {
+        userSpendingPower: spendingPower,
+        posts: newPostsData.map((post) => ({
+            userId: post.id, // Only include necessary data for the model to process
+            spendingRange: post.spendingRange,
+        })),
+        };
+
+        // Call GPT API for recommendations
+        const response = await openai.completions.create({
+            model: "gpt-3.5-turbo-instruct",
+            prompt: `Given the user's spending power level of ${spendingPower}, 
+            prioritize the following posts: ${JSON.stringify(gptInput)},
+            just output the post userIds in order of priority.`,
+            max_tokens: 150,
+        });
     
-      const handleRefresh = async () => {
-        setRefreshing(true);
-        setLastVisible(null);
+        console.log("OpenAI Response:", response.choices[0].text.trim()); // Log the response to debug
+
+        // console.log("OpenAI Response:", response.choices[0].text); // Log the response to debug
+    
         try {
-          await fetchUserData();
-          await fetchPosts();
+            // Attempt to parse the response
+            const prioritizedUserIds = response.choices[0].text.trim();
+            const prioritizedPosts = postsData.filter((post) =>
+                prioritizedUserIds.includes(post.id)
+            );
+
+            const uniquePosts = [...posts, ...prioritizedPosts].reduce<Post[]>(
+                (unique, o) => {
+                if (!unique.some((obj) => obj.id === o.id)) {
+                    unique.push(o);
+                }
+                return unique;
+                },
+                []
+            );
+            // console.log(prioritizedPosts)
+            setPosts(uniquePosts);
+            
+        } catch (e) {
+            console.error("Failed to parse JSON:", e);
+            // Handle error or fallback
         } finally {
-          setRefreshing(false);
+            setLoading(false);
+        }
+    
+    };
+
+    const refreshFetch = async (spendingPower?: number) => {
+        setLoading(true);
+
+        const db = getFirestore();
+        const postsRef = collection(db, "posts");
+
+        const q = query(
+        postsRef
+        );
+
+        const documentSnapshots = await getDocs(q);
+        const postsData: Post[] = documentSnapshots.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        })) as Post[];
+
+        // Prepare data for GPT API
+        const gptInput = {
+        userSpendingPower: spendingPower,
+        posts: postsData.map((post) => ({
+            userId: post.id, // Only include necessary data for the model to process
+            spendingRange: post.spendingRange,
+        })),
+        };
+
+        // Call GPT API for recommendations
+        const response = await openai.completions.create({
+            model: "gpt-3.5-turbo-instruct",
+            prompt: `Given the user's spending power level of ${spendingPower}, 
+            prioritize the following posts: ${JSON.stringify(gptInput)},
+            just output the post userIds in order of priority.`,
+            max_tokens: 150,
+        });
+    
+        console.log("OpenAI Response:", response.choices[0].text.trim()); // Log the response to debug
+    
+        try {
+            // Attempt to parse the response
+            const prioritizedUserIds = response.choices[0].text.trim();
+            const prioritizedPosts = postsData.filter((post) =>
+                prioritizedUserIds.includes(post.id)
+            );
+
+            setPosts(prioritizedPosts);
+            
+        } catch (e) {
+            console.error("Failed to parse JSON:", e);
+            // Handle error or fallback
+        } finally {
+            setLoading(false);
+        }
+    
+    };
+
+  
+    const handleLoadMore = () => {
+        if (!loading) {
+          fetchPosts(spendingRange);
         }
       };
     
-      const handleSearch = async () => {
+    const handleRefresh = () => {
+        setRefreshing(true);
+        setPosts([])
+    try {
+        fetchUserData();
+        refreshFetch(spendingRange);
+    } finally {
+        setRefreshing(false);
+    }
+    };
+    
+    const handleSearch = async () => {
         try {
           const response = await fetch(
             "https://save-elbrpbsd6-savevs-projects.vercel.app/api/search",
@@ -243,9 +290,9 @@ const Home = () => {
             "An error occurred while searching for posts. Please try again."
           );
         }
-      };
+    };
     
-      const renderItem = ({ item }: { item: Post }) => (
+    const renderItem = ({ item }: { item: Post }) => (
         <TouchableOpacity
           style={styles.card}
           onPress={() => navigation.navigate("PostDetails", { post: item })}
@@ -255,9 +302,9 @@ const Home = () => {
           )}
           <Text style={styles.cardTitle}>{item.title}</Text>
         </TouchableOpacity>
-      );
+    );
     
-      return (
+    return (
         <SafeAreaView style={styles.container}>
           <TextInput
             placeholder="Search ......"
@@ -278,15 +325,15 @@ const Home = () => {
             testID="flatlist"
           />
         </SafeAreaView>
-      );
-    };
+    );
+};
     
-    const styles = StyleSheet.create({
-      container: {
+const styles = StyleSheet.create({
+    container: {
         flex: 1,
         backgroundColor: "#f5f6fa",
-      },
-      card: {
+    },
+    card: {
         flex: 1,
         backgroundColor: "#fff",
         borderRadius: 5,
@@ -303,32 +350,32 @@ const Home = () => {
         elevation: 5,
         alignItems: "center",
         justifyContent: "center",
-      },
-      cardImage: {
+    },
+    cardImage: {
         width: 180,
         height: 180,
-      },
-      cardTitle: {
+    },
+    cardTitle: {
         fontSize: 18,
         fontWeight: "bold",
         marginVertical: 10,
-      },
-      cardCaption: {
+    },
+    cardCaption: {
         fontSize: 14,
         color: "#666",
         marginBottom: 10,
-      },
-      cardSpendingRange: {
+    },
+    cardSpendingRange: {
         fontSize: 14,
         color: "#666",
-      },
-      searchBar: {
+    },
+    searchBar: {
         borderWidth: 1,
         borderRadius: 10,
         marginVertical: 10,
         height: 40,
         marginHorizontal: 10,
         paddingHorizontal: 10,
-      },
-    });
-    export default Home;
+    },
+});
+export default Home;
