@@ -19,6 +19,7 @@ import ChatList from "@/screens/chat/ChatList";
 import UserProfile from "@/screens/profile/UserProfile";
 import Chat from "@/screens/chat/Chat";
 import OnBoarding from "@/screens/authentication/onBoarding";
+import UpdateProfile from "@/screens/setting/UpdateProfile";
 
 export default function authStack() {
     const Stack = createNativeStackNavigator();
@@ -54,7 +55,7 @@ export default function authStack() {
                     <Stack.Screen 
                         name="AddTransaction" 
                         component={AddTransaction}
-                        options={{headerShown: true, title: "Add transaction", headerBackTitle:"Expenses"}}/>
+                        options={{headerShown: true, title: "Add Expense", headerBackTitle:"Expenses"}}/>
                     <Stack.Screen 
                         name="TransactionDetail" 
                         component={TransactionDetail}
@@ -95,6 +96,11 @@ export default function authStack() {
                         name="OnBoarding" 
                         component={OnBoarding}
                         options={{headerShown: false, title: "Profile", headerBackTitle: "Home"}}/>
+                    <Stack.Screen
+                        name = "UpdateProfile"
+                        component={UpdateProfile}
+                        options={{headerShown: true, title: "Update Profile", headerBackTitle: "Home"}}
+                        />
                 </Stack.Navigator>
             </NavigationContainer>
     );

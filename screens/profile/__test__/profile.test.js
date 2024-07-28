@@ -156,19 +156,4 @@ describe('Profile', () => {
         });
     });
 
-
-    it('Handles Role Upgrade', async () => {
-        const { getByText } = render(<Profile />);
-
-        const upgradeButton = getByText('Upgrade Business');
-        fireEvent.press(upgradeButton);
-
-        await waitFor(() => {
-          expect(setDoc).toHaveBeenCalledWith(
-            undefined,
-            { role: 'Business' },
-            { merge: true }
-          );
-        });
-    });
 });

@@ -42,13 +42,13 @@ const Chat = () => {
     const [loading, setLoading] = useState(false);
     const [userName, setUserName] = useState<string>('');
     const [profilePic, setProfilePic] = useState<string>('');
+    const [isSending, setIsSending] = useState(false);
     
     const auth = getAuth();
     const user = auth.currentUser;
     const db = getFirestore();
 
     const flatListRef = useRef<FlatList>(null);
-
 
     //Create ChatRoom
     useEffect(() => {
@@ -79,6 +79,7 @@ const Chat = () => {
             });
             setChatRoomId(newChatRoomRef.id);
             setStatus(true, newChatRoomRef.id);
+            setLastFetchedTimestamp(new Date())
           }
         };
     
@@ -273,9 +274,11 @@ const Chat = () => {
 
     const handleSend = async () => {
         if (!chatRoomId || !user || !text.trim()) return;
-    
+
+        setIsSending(true);
+
         const messagesRef = collection(db, 'chatRooms', chatRoomId, 'messages');
-        await addDoc(messagesRef, {
+        addDoc(messagesRef, {
             text,
             createdAt: new Date(),
             senderId: user.uid,
@@ -285,17 +288,17 @@ const Chat = () => {
         
         const chatRoomRef = doc(db, 'chatRooms', chatRoomId);
         
-        await updateDoc(chatRoomRef, {
+        updateDoc(chatRoomRef, {
             lastMessage: text,
             lastMessageTime: new Date(),
         });
         
-        await setDoc(doc(db, 'users', user.uid, 'userChats', chatRoomId), {
+        setDoc(doc(db, 'users', user.uid, 'userChats', chatRoomId), {
             lastMessage: text,
             lastMessageTime: new Date(),
-          }, { merge: true });
+        }, { merge: true });
 
-        await setDoc(doc(db, 'users', userId, 'userChats', chatRoomId), {
+        setDoc(doc(db, 'users', userId, 'userChats', chatRoomId), {
           lastMessage: text,
           lastMessageTime: new Date(),
         }, { merge: true });
@@ -318,7 +321,8 @@ const Chat = () => {
           }
 
         setText('');
-        Keyboard.dismiss();      
+        Keyboard.dismiss();
+        setIsSending(false);
     };
 
     const fetchUserData = async () => {
@@ -344,8 +348,9 @@ const Chat = () => {
             <TouchableOpacity onPress={() => {
               navigation.goBack()
               setStatus(false, null);
-              }}>
-              <Ionicons name="arrow-back" size={24} color="black"/>
+              }}
+              style={styles.back}>
+              <Ionicons name="arrow-back" size={26} color="black"/>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigation.navigate('UserProfile', {userId})}>
@@ -383,7 +388,7 @@ const Chat = () => {
             multiline
             placeholderTextColor={'gray'}
           />
-          <TouchableOpacity onPress={handleSend} testID='send'>
+          <TouchableOpacity onPress={handleSend} testID='send' disabled={isSending}>
             <MaterialCommunityIcons name="send" size={24} color="black" style={styles.send}/>
           </TouchableOpacity>
         </View>
@@ -473,7 +478,15 @@ const styles = StyleSheet.create({
       marginLeft:10,
       padding: 10,
       marginTop: 5,
+    },
+    back: {
+      height:45,
+      width:45, 
+      justifyContent: 'center',
+      alignItems: 'center',
+      // borderWidth:1
     }
 
-  });
+});
+
 export default Chat;

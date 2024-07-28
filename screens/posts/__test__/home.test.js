@@ -73,7 +73,7 @@ describe('Home', () => {
 
         expect(getByPlaceholderText('Search ......')).toBeTruthy();
 
-        await waitFor(() => expect(getByTestId('flatlist').props.data.length).toBeGreaterThan(0));
+        await waitFor(() => expect(getByTestId('flatlist').props.data.length).toBeTruthy());
     });
 
     it('Search and Navigate to Search Screen', async () => {

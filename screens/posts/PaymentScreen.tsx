@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Button, Text, Alert, StyleSheet, SafeAreaView, Image, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
-import { CardField, useStripe } from '@stripe/stripe-react-native';
+import { View, Button, Text, Alert, StyleSheet, SafeAreaView, Image, Dimensions, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { CardField, StripeContainer, useStripe } from '@stripe/stripe-react-native';
 import { PDFDocument, rgb } from 'pdf-lib';
 import * as FileSystem from 'expo-file-system';
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -181,52 +181,63 @@ export default function PaymentScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-      <SafeAreaView style={styles.overall}>
-          <Swiper 
-            style={styles.swiper} 
-            showsPagination={true}
-            loadMinimal={true}>
-            {images.map((imageUri, index) => (
-              <View key={index} style={styles.slide}>
-                <Image source={{uri: imageUri}} style={styles.image} testID={`image-${index}`}/>
-              </View>
-            ))}
-          </Swiper>
-        <View style={styles.paymentHeaderContainer}>
-          <Text style={styles.paymentHeader}>Payment Details</Text>
-          <Text style={styles.paymentAmount}>$ 1.09</Text>
-          <Text style={styles.paymentRemark}>Remark: Every Post will charge $1.09</Text>
-        </View>
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <SafeAreaView style={styles.overall}>
+              <Swiper 
+                style={styles.swiper} 
+                showsPagination={true}
+                loadMinimal={true}>
+                {images.map((imageUri, index) => (
+                  <View key={index} style={styles.slide}>
+                    <Image source={{uri: imageUri}} style={styles.image} testID={`image-${index}`}/>
+                  </View>
+                ))}
+              </Swiper>
+            <View style={styles.paymentHeaderContainer}>
+              <Text style={styles.paymentHeader}>Payment Details</Text>
+              <Text style={styles.paymentAmount}>$ 1.09</Text>
+              <Text style={styles.paymentRemark}>
+                Remark: To regulate saveV integrity, we seriously verify every postings.
+                Therefore, saveV posses a $1.09 for every posting fee</Text>
+            </View>
 
-        <CardField
-          postalCodeEnabled={false}
-          placeholders={{
-          number: '4242 4242 4242 4242',
-          expiration: 'MM/YY',
-          cvc: 'CVC',    
-          }}
-              
-          cardStyle={{
-            backgroundColor: '#FFFFFF',
-            textColor: '#000000',
-            borderWidth: 1,
-            borderColor: '#000000',
-            borderRadius: 8,
-          }}
-              
-          style={{
-            width: '95%',
-            height: 100,
-            marginVertical: 30,
-          }}
-          
-          onCardChange={(cardDetails) => setCardDetails(cardDetails)}
-        
-          testID='card-field'
-        />
+            <View style={styles.stripeContainer}>
+              <Text style={styles.credit}>Credit Card Payment</Text>
+              <Text style={styles.stripe}>Powered by Stripe</Text>
+            </View>
 
-        <Button onPress={handlePayPress} title="Pay" disabled={loading} />
-      </SafeAreaView>
+            <CardField
+              postalCodeEnabled={false}
+              placeholders={{
+              number: '4242 4242 4242 4242',
+              expiration: 'MM/YY',
+              cvc: 'CVC',    
+              }}
+                  
+              cardStyle={{
+                backgroundColor: '#FFFFFF',
+                textColor: '#000000',
+                borderWidth: 1,
+                borderColor: '#000000',
+                borderRadius: 8,
+              }}
+                  
+              style={{
+                width: '95%',
+                height: 100,
+                marginVertical: 5,
+              }}
+              
+              onCardChange={(cardDetails) => setCardDetails(cardDetails)}
+            
+              testID='card-field'
+            />
+
+            <Button onPress={handlePayPress} title="Pay" disabled={loading} />
+            <View style={{marginBottom:50}}></View>
+          </SafeAreaView>
+
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     )
 }
@@ -238,7 +249,7 @@ const styles = StyleSheet.create({
   overall: {
     flex: 1,
     backgroundColor: '#f5f6fa',
-    // justifyContent: 'center',
+    // justifyContent: '',
     alignItems: 'center',
   },
   paymentHeaderContainer: {
@@ -256,12 +267,13 @@ const styles = StyleSheet.create({
     elevation: 5,
     width: '80%',
     alignItems: 'center',
-    marginTop:30,
-    // borderWidth:1
+    marginTop:20,
+    borderWidth:1
   },
   swiper: {
-    height: 300,
-    marginBottom: 20,
+    // height: ,
+    // marginBottom: ,
+    marginTop:20,
     // borderWidth:1
   },
   slide: {
@@ -270,21 +282,21 @@ const styles = StyleSheet.create({
       alignItems: 'center',
   },
   image: {
-      width: 300,
-      height: 300,
+      width: 250,
+      height: 250,
       borderRadius:10,
   },
   paymentHeader: {
     fontSize:18,
     marginHorizontal:20,
     fontWeight:'500',
-    marginBottom:10,
+    marginBottom:5,
   },
   paymentAmount: {
     fontSize:18,
     marginHorizontal:20,
     fontWeight:'500',
-    marginBottom:15,
+    marginBottom:10,
   },
   paymentRemark: {
     fontSize:13,
@@ -295,4 +307,15 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
   },
+  stripeContainer: {
+    marginTop:20,
+    width:'90%'
+  },
+  credit: {
+    fontSize:24,
+    fontWeight: 'bold'
+  },
+  stripe: {
+    fontSize:10,
+  }
 });

@@ -98,25 +98,25 @@ const Profile = () => {
     }
   };
 
-  const handleUpgrade = async () => {
+  // const handleUpgrade = async () => {
 
-        if (user) {
+  //       if (user) {
 
-            const db = getFirestore();
-            const userRef = doc(db, "users", user.uid);
+  //           const db = getFirestore();
+  //           const userRef = doc(db, "users", user.uid);
 
-            try {
+  //           try {
 
-                await setDoc(userRef, {
-                    role: "Business"
-                },{merge:true})
+  //               await setDoc(userRef, {
+  //                   role: "Business"
+  //               },{merge:true})
                                 
-                Alert.alert("Success", "Update Successful")
-            } catch (e) {
-                Alert.alert("Error", "Try Again")
-            }
-        }
-  }
+  //               Alert.alert("Success", "Update Successful")
+  //           } catch (e) {
+  //               Alert.alert("Error", "Try Again")
+  //           }
+  //       }
+  // }
 
   const chooseImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -186,7 +186,7 @@ const Profile = () => {
         <View style={styles.headerRight}>
           <Text style={styles.userName}>{userName}</Text>
           <Text style={styles.userId}>{user?.uid}</Text>
-          {role == 'normal' ?
+          {/* {role == 'normal' ?
             <Pressable style={styles.button} onPress={handleUpgrade}>
               <Text style={styles.buttonText}>Upgrade Business</Text>
             </Pressable>
@@ -194,7 +194,10 @@ const Profile = () => {
             <Pressable style={styles.button} onPress={() => navigation.navigate('UpdateProfile')}>
               <Text style={styles.buttonText}>Edit Profile</Text>
             </Pressable>
-          }
+          } */}
+            <Pressable style={styles.button} onPress={() => navigation.navigate('UpdateProfile')}>
+              <Text style={styles.buttonText}>Edit Profile</Text>
+            </Pressable>
         </View>
       </View>
       <View style={styles.contentContainer}>
