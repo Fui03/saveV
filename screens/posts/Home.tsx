@@ -31,11 +31,6 @@ import Configuration from "openai";
 import OpenAI from "openai";
 import { API_KEY } from '@env';
 
-// Create a configuration object with your API key
-const configuration = new Configuration({
-  apiKey: API_KEY
-});
-
 // Create an instance of OpenAIApi with the configuration
 const openai = new OpenAI({
   apiKey: API_KEY
