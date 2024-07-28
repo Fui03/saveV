@@ -133,8 +133,8 @@ describe('Chat', () => {
   it('renders correctly', async () => {
     const { getByPlaceholderText, getByText } = render(<Chat />);
 
-    await act(async () => {
-        expect(getByPlaceholderText('Type your message')).toBeTruthy();
+    await waitFor(() => {
+      expect(getByPlaceholderText('Type your message')).toBeTruthy();
     })
   });
 
