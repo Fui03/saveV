@@ -10,6 +10,8 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
@@ -299,26 +301,28 @@ const Home = () => {
     );
     
     return (
-        <SafeAreaView style={styles.container}>
-          <TextInput
-            placeholder="Search ......"
-            value={search}
-            onChangeText={setSearch}
-            style={styles.searchBar}
-            onSubmitEditing={handleSearch}
-          />
-          <FlatList
-            data={posts}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.5}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            testID="flatlist"
-          />
-        </SafeAreaView>
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+            <SafeAreaView style={styles.container}>
+            <TextInput
+                placeholder="Search ......"
+                value={search}
+                onChangeText={setSearch}
+                style={styles.searchBar}
+                onSubmitEditing={handleSearch}
+            />
+            <FlatList
+                data={posts}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                numColumns={2}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                testID="flatlist"
+            />
+            </SafeAreaView>
+        </TouchableWithoutFeedback>
     );
 };
     

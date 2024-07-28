@@ -43,10 +43,10 @@ export default function DrawerNavigation() {
                 name = "ResetEmail"
                 component={ResetEmail}
                 options={{title:"Reset Email"}}/>
-            <Drawer.Screen
+            {/* <Drawer.Screen
                 name = "UpdateProfile"
                 component={UpdateProfile}
-                options={{title:"Update Profile"}}/>
+                options={{title:"Update Profile"}}/> */}
             <Drawer.Screen
                 name = "PreferenceManagement"
                 component={PreferenceManagement}

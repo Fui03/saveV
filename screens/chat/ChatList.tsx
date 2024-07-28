@@ -62,7 +62,13 @@ const ChatList = () => {
           return chatRoom;
         }));
 
-        setChatRooms(chatRoomsWithUserData);
+        const sortedChatRooms = chatRoomsWithUserData.sort((a, b) => {
+          const dateA = a.lastMessageTime ? a.lastMessageTime.toDate() : new Date(0);
+          const dateB = b.lastMessageTime ? b.lastMessageTime.toDate() : new Date(0);
+          return dateB - dateA;
+        });
+
+        setChatRooms(sortedChatRooms);
         setLoading(false);
       });
 

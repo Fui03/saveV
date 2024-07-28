@@ -22,30 +22,30 @@ import CustomHeader from "./CustomHeader";
 export default function TabNavigation() {
     const Tab = createBottomTabNavigator();
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
-    const [role, setRole] = useState<String>();
+    // const [role, setRole] = useState<String>();
 
-    useEffect(() => {
-        const auth = getAuth();
-        const user = auth.currentUser;
+    // useEffect(() => {
+    //     const auth = getAuth();
+    //     const user = auth.currentUser;
 
-        if (user) {
-            const db = getFirestore();
-            const userRef = doc(db, "users", user.uid);
-            const fetchUserData = onSnapshot(userRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const userData = snapshot.data();
-                    const userRole = userData.role || 'normal';
+    //     if (user) {
+    //         const db = getFirestore();
+    //         const userRef = doc(db, "users", user.uid);
+    //         const fetchUserData = onSnapshot(userRef, (snapshot) => {
+    //             if (snapshot.exists()) {
+    //                 const userData = snapshot.data();
+    //                 const userRole = userData.role || 'normal';
 
-                    setRole(userRole);
-                } else {
-                    setRole('normal');
-                }
-            });
+    //                 setRole(userRole);
+    //             } else {
+    //                 setRole('normal');
+    //             }
+    //         });
         
-        }
+    //     }
         
         
-    }, []);
+    // }, []);
 
     const navigateToAddPost = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -89,17 +89,14 @@ export default function TabNavigation() {
         >
             <Tab.Screen name="Home" component={Home} />
             <Tab.Screen name="Expenses" component={Transaction} />
-            {role == "Business"
-                ? <Tab.Screen name="AddPost" component={AddPostNavigator}
-                    listeners={{
-                        tabPress: e => {
-                            e.preventDefault();
-                            navigateToAddPost();
-                        }
-                    }}
-                />
-                : <></>
-            }
+            <Tab.Screen name="AddPost" component={AddPostNavigator}
+                listeners={{
+                    tabPress: e => {
+                        e.preventDefault();
+                        navigateToAddPost();
+                    }
+                }}
+            />
             <Tab.Screen name="Statistic" component={Statistic} />
             <Tab.Screen name="Profile" component={Profile} />
         </Tab.Navigator>

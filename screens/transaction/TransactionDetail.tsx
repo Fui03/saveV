@@ -79,7 +79,8 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 20,
     // fontWeight: 'bold',
-    marginBottom: 5
+    marginBottom: 5,
+    marginTop:10,
   },
   textContainer: {
     // borderWidth:1,

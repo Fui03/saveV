@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, TextInput, Button, StyleSheet, Text, View , Image, TouchableOpacity, Pressable, Alert} from 'react-native';
+import { SafeAreaView, TextInput, Button, StyleSheet, Text, View , Image, TouchableOpacity, Pressable, Alert, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getAuth } from 'firebase/auth';
@@ -100,51 +100,59 @@ const AddTransaction = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Transaction Name</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Transaction Name"
-          value={name}
-          onChangeText={setName}
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Amount</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Amount"
-          keyboardType="numeric"
-          value={(amount === undefined || Number.isNaN(amount)) ? '' : amount.toString(10)}
-          onChangeText={(text) => setAmount(parseFloat(text))}
-        />
-      </View>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Date</Text>
-          <TouchableOpacity onPress={() => setOpenDatePicker(true)}>
-            <View style={styles.dateContainer}>
-              <Image source={require('@/assets/images/calendar.png')} style={styles.logo}/>
-              <View style={styles.dateTextContainer}>
-                <Text style={styles.dateText}>{format(date, "dd-MM-yyyy")}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-            {/* <Button title = "Select Date" onPress={() => setOpenDatePicker(true)}/> */}
-          {openDatePicker && (
-            <DateTimePicker
-            value={date}
-            mode="date"
-            display="default"
-            onChange={onChange}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Expenses Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Transaction Name"
+              value={name}
+              onChangeText={setName}
             />
-          )}
-          
-        </View>
-        <Pressable style={styles.button} onPress={handleAddTransaction}>
-          <Text style={styles.buttonText}>Add Transaction</Text>
-        </Pressable>
-    </SafeAreaView>
+          </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Amount</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Amount"
+              keyboardType="numeric"
+              value={(amount === undefined || Number.isNaN(amount)) ? '' : amount.toString(10)}
+              onChangeText={(text) => setAmount(parseFloat(text))}
+            />
+          </View>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Date</Text>
+              <TouchableOpacity onPress={() => setOpenDatePicker(true)}>
+                <View style={styles.dateContainer}>
+                  <Image source={require('@/assets/images/calendar.png')} style={styles.logo}/>
+                  <View style={styles.dateTextContainer}>
+                    <Text style={styles.dateText}>{format(date, "dd-MM-yyyy")}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+                {/* <Button title = "Select Date" onPress={() => setOpenDatePicker(true)}/> */}
+              {openDatePicker && (
+                <DateTimePicker
+                value={date}
+                mode="date"
+                display="default"
+                onChange={onChange}
+                />
+              )}
+              
+            </View>
+            <Pressable style={styles.button} onPress={handleAddTransaction}>
+              <Text style={styles.buttonText}>Add Transaction</Text>
+            </Pressable>
+        </SafeAreaView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
+    
   );
 };
 
@@ -159,7 +167,8 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 5
+    marginBottom: 5,
+    marginTop:10,
   },
   input: {
     height: 40,

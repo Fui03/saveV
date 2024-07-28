@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, TouchableWithoutFeedback, Keyboard} from 'react-native';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
@@ -16,6 +16,7 @@ const CustomHeader = () => {
     const navigation = useNavigation<NativeStackNavigationProp<StackParamList>>();
 
     return (
+      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <SafeAreaView style={styles.headerContainer}>
             <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.openDrawer())} style={{marginLeft:10}}>
                 <Ionicons name="menu" size={28} color="black" />
@@ -24,6 +25,7 @@ const CustomHeader = () => {
                 <Ionicons name="chatbubbles-outline" size={28} color="black" style={{marginRight:10}}/>
             </TouchableOpacity>
         </SafeAreaView>
+      </TouchableWithoutFeedback>
     );
 };
 
@@ -35,6 +37,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     paddingVertical:10,
     paddingTop:20,
+    // borderWidth:1,
   },
   headerTitle: {
     fontSize: 18,

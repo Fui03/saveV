@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Button, Text, Alert, StyleSheet, SafeAreaView, Image, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Button, Text, Alert, StyleSheet, SafeAreaView, Image, Dimensions, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { CardField, useStripe } from '@stripe/stripe-react-native';
 import { PDFDocument, rgb } from 'pdf-lib';
 import * as FileSystem from 'expo-file-system';
@@ -181,52 +181,55 @@ export default function PaymentScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-      <SafeAreaView style={styles.overall}>
-          <Swiper 
-            style={styles.swiper} 
-            showsPagination={true}
-            loadMinimal={true}>
-            {images.map((imageUri, index) => (
-              <View key={index} style={styles.slide}>
-                <Image source={{uri: imageUri}} style={styles.image} testID={`image-${index}`}/>
-              </View>
-            ))}
-          </Swiper>
-        <View style={styles.paymentHeaderContainer}>
-          <Text style={styles.paymentHeader}>Payment Details</Text>
-          <Text style={styles.paymentAmount}>$ 1.09</Text>
-          <Text style={styles.paymentRemark}>Remark: Every Post will charge $1.09</Text>
-        </View>
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <SafeAreaView style={styles.overall}>
+              <Swiper 
+                style={styles.swiper} 
+                showsPagination={true}
+                loadMinimal={true}>
+                {images.map((imageUri, index) => (
+                  <View key={index} style={styles.slide}>
+                    <Image source={{uri: imageUri}} style={styles.image} testID={`image-${index}`}/>
+                  </View>
+                ))}
+              </Swiper>
+            <View style={styles.paymentHeaderContainer}>
+              <Text style={styles.paymentHeader}>Payment Details</Text>
+              <Text style={styles.paymentAmount}>$ 1.09</Text>
+              <Text style={styles.paymentRemark}>Remark: Every Post will charge $1.09</Text>
+            </View>
 
-        <CardField
-          postalCodeEnabled={false}
-          placeholders={{
-          number: '4242 4242 4242 4242',
-          expiration: 'MM/YY',
-          cvc: 'CVC',    
-          }}
+            <CardField
+              postalCodeEnabled={false}
+              placeholders={{
+              number: '4242 4242 4242 4242',
+              expiration: 'MM/YY',
+              cvc: 'CVC',    
+              }}
+                  
+              cardStyle={{
+                backgroundColor: '#FFFFFF',
+                textColor: '#000000',
+                borderWidth: 1,
+                borderColor: '#000000',
+                borderRadius: 8,
+              }}
+                  
+              style={{
+                width: '95%',
+                height: 100,
+                marginVertical: 30,
+              }}
               
-          cardStyle={{
-            backgroundColor: '#FFFFFF',
-            textColor: '#000000',
-            borderWidth: 1,
-            borderColor: '#000000',
-            borderRadius: 8,
-          }}
-              
-          style={{
-            width: '95%',
-            height: 100,
-            marginVertical: 30,
-          }}
-          
-          onCardChange={(cardDetails) => setCardDetails(cardDetails)}
-        
-          testID='card-field'
-        />
+              onCardChange={(cardDetails) => setCardDetails(cardDetails)}
+            
+              testID='card-field'
+            />
 
-        <Button onPress={handlePayPress} title="Pay" disabled={loading} />
-      </SafeAreaView>
+            <Button onPress={handlePayPress} title="Pay" disabled={loading} />
+          </SafeAreaView>
+
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     )
 }
