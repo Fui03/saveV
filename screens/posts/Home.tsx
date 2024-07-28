@@ -240,7 +240,6 @@ const Home = () => {
             
         } catch (e) {
             console.error("Failed to parse JSON:", e);
-            // Handle error or fallback
         } finally {
             setLoading(false);
         }
