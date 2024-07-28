@@ -7,6 +7,10 @@ module.exports = function (api) {
         // '@babel/preset-react',
         // '@babel/preset-typescript',
       ],
+      plugins: [['module:react-native-dotenv', {
+        moduleName: '@env',
+        path: '.env',
+      }]],
     };
   };
   
