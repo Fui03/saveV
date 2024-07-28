@@ -4,24 +4,32 @@ import Login from '../Login';
 import { useNavigation } from '@react-navigation/native';
 import { Alert } from 'react-native';
 import { getAuth, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, getDoc, doc } from 'firebase/firestore';
 
 jest.mock('@react-navigation/native');
 jest.mock('firebase/auth');
 jest.mock('@react-native-async-storage/async-storage', () =>
     require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
-  
 
+jest.mock('firebase/firestore', () => ({
+    getFirestore: jest.fn(),
+    getDoc: jest.fn(),
+    doc: jest.fn(),
+}));
+  
 describe('Login', () => {
     const mockNavigation = {
         replace: jest.fn(),
         navigate: jest.fn(),
         reset: jest.fn(),
     };
+    
+    const mockUser = { uid: 'testUserId', email: 'test@test.com' , hasCompletedOnboarding: false};
+    const mockUser2 = { uid: 'testUserId', email: 'test@test.com', hasCompletedOnboarding: true};
 
     beforeEach(() => {
         jest.clearAllMocks();
-
         useNavigation.mockReturnValue(mockNavigation);
     });
 
@@ -48,7 +56,9 @@ describe('Login', () => {
         });
     });
 
-    it('Navigates to DrawerNavigation on Successful Login', async () => {
+    it('Navigates to OnBoarding on First Successful Login', async () => {
+        getDoc.mockResolvedValue({ exists: jest.fn().mockReturnValue(true), data: jest.fn().mockReturnValue(mockUser) });
+
         signInWithEmailAndPassword.mockResolvedValue({
         user: {
             emailVerified: true,
@@ -61,10 +71,26 @@ describe('Login', () => {
         fireEvent.press(getByTestId('Login'));
 
         await waitFor(() => {
-            expect(mockNavigation.replace).toHaveBeenCalledWith('DrawerNavigation');
+            expect(mockNavigation.replace).toHaveBeenCalledWith('OnBoarding');
         });
     });
+    
+    it('Navigates to OnBoarding on First Successful Login', async () => {
+        signInWithEmailAndPassword.mockResolvedValue({
+        user: {
+            emailVerified: true,
+        },
+        });
 
+        const { getByPlaceholderText, getByTestId} = render(<Login />);
+        fireEvent.changeText(getByPlaceholderText('Email'), 'test@example.com');
+        fireEvent.changeText(getByPlaceholderText('Password'), 'correctpassword');
+        fireEvent.press(getByTestId('Login'));
+
+        await waitFor(() => {
+            expect(mockNavigation.replace).toHaveBeenCalledWith('OnBoarding');
+        });
+    });
     it('Navigates to Singup Screen', async () => {
 
         const { getByTestId} = render(<Login />);
