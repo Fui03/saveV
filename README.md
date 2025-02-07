@@ -1,50 +1,62 @@
-# Welcome to your Expo app 👋
+# SaveV
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Introduction
+SaveV is a mobile application designed to unify **financial management** and **lifestyle choices**. It helps users **track transactions**, **analyze spending power**, and **interact with businesses** through AI-powered recommendations.
 
-## Get started
+## Table of Contents
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contact](#contact)
 
-1. Install dependencies
+## Features
+- **User Account Authentication** (Firebase authentication, email/password, phone number login)
+- **Transaction Tracking** (Real-time expense and income tracking)
+- **Financial Statistics** (Automated CPF and tax calculations, spending power insights)
+- **AI Recommendations** (AI-powered financial suggestions based on spending patterns)
+- **Social Features** (Post creation, commenting, liking, sharing)
+- **Chat Functionality** (Real-time chat and notifications)
+- **Secure Payments** (Stripe integration for transactions)
+- **PDF Report Generation** (Monthly financial summaries)
+- **CI/CD Integration** (Automated deployment via GitHub Actions)
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
+- **Frontend**: React Native (Expo)
+- **Backend**: Node.js (Vercel)
+- **Database**: Firebase Firestore (moving towards PostgreSQL)
+- **Authentication**: Firebase Auth (email validation)
+- **Payments**: Stripe API
+- **Testing**: Jest, Mocha, Postman
+- **CI/CD**: GitHub Actions
 
-2. Start the app
+## Installation
+To install, tap the [deployment link](https://expo.dev/preview/update?message=CI%2FCD%20update%20from%20GitHub%20Actions&updateRuntimeVersion=1.0.0&createdAt=2024-07-28T15%3A56%3A45.771Z&slug=exp&projectId=82d4d277-89d7-4ec6-8e16-cc628389b919&group=d3a71bff-bd35-4391-bf34-ac8bc08996ea) and scan the QR code using your mobile phone.
 
-   ```bash
-    npx expo start
-   ```
+## Usage
+1. **Sign up/Login** using email or phone number
+2. **Track transactions** and categorize expenses
+3. **View financial insights** (CPF contributions, tax calculations, net spending power)
+4. **Interact with the community** by posting and engaging with content
+5. **Chat with users** for recommendations and discussions
+6. **Make payments securely** via Stripe
+7. **Download PDF reports** for financial analysis
 
-In the output, you'll find options to open the app in a
+## Contact
+- **Documentation:** [Project Documentation](https://drive.google.com/file/d/1pUsDz1CySXZ9sJTmUji0qGof2LL7H5Fp/view?usp=sharing)
+- **Developers:** Fui Jing Min, Chew Jun Jie
+- **GitHub Repo:** [SaveV](https://github.com/Fui03/saveV)
+- **Demo Videos:**
+  - [Milestone 1](https://youtu.be/Fs7AGrz8tjg?si=lDd5XNi1JEOnsiTH)
+  - [Milestone 2](https://youtu.be/HvPRtvJ2nMs)
+  - [Milestone 3](https://youtu.be/C-k_RXZbgWM)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Deployment
+- Access the latest version on **Expo**:
+  [SaveV Preview](https://expo.dev/preview/update?message=CI%2FCD%20update%20from%20GitHub%20Actions&updateRuntimeVersion=1.0.0&createdAt=2024-07-28T15%3A56%3A45.771Z&slug=exp&projectId=82d4d277-89d7-4ec6-8e16-cc628389b919&group=d3a71bff-bd35-4391-bf34-ac8bc08996ea)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+For mobile users, download **Expo Go** to access SaveV.
 
-## Get a fresh project
+---
+Feel free to reach out for any questions or suggestions!
 
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
